@@ -6,6 +6,7 @@ from django.utils.encoding import python_2_unicode_compatible
 from django.db import models
 from django.core import validators
 from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _
 from myrg_users.models import RobogalsUser
 from myrg_groups.models import Role
 
@@ -14,10 +15,12 @@ class RepoContainer(models.Model):
     user = models.ForeignKey(RobogalsUser)
     role = models.ForeignKey(Role)
     title = models.CharField(_('title'),
+                             max_length=63,
                              blank=False)
     body = models.TextField(_('body'),
                             blank=False)
     tags = models.CharField(_('tags'),
+                            max_length=63,
                             blank=False)
     SERVICE_CHOICES = (
         (0, 'Private'), #Default, but we will probably disallow this in logic. We don't want people hiding files on our server.
@@ -29,16 +32,39 @@ class RepoContainer(models.Model):
     service = models.PositiveSmallIntegerField(_('service'),
                                                choices=SERVICE_CHOICES,
                                                default=0,
-                                               blank=False)
+                                               #blank=False
+                                               )
     date_created = models.DateField(_('date created'),
-                                    blank=False)
+                                    #blank=False,
+                                    default=timezone.now)
     date_updated = models.DateField(_('date created'),
-                                    blank=False)
+                                    #blank=False,
+                                    default=timezone.now)
+    
+    # Fields that cannot be listed or filtered/sorted with
+    PROTECTED_FIELDS = ()
+
+    # Fields that cannot be listed (but can be filtered/sorted with)
+    # NONVISIBLE_FIELDS = (
+    
+    # Fields that cannot be written to
+    READONLY_FIELDS = ("id","date_created",)
 
 #@python_2_unicode_compatible
 class RepoFile(models.Model):
     name = models.CharField(_('name'),
+                            max_length=63,
                             blank=False)
     file = models.FileField(_('file'),
+                            upload_to="/server/",
                             blank=False)
     container = models.ForeignKey(RepoContainer)
+    
+    # Fields that cannot be listed or filtered/sorted with
+    PROTECTED_FIELDS = ()
+
+    # Fields that cannot be listed (but can be filtered/sorted with)
+    # NONVISIBLE_FIELDS = ()
+    
+    # Fields that cannot be written to
+    READONLY_FIELDS = ("id",)
