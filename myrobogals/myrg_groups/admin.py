@@ -73,7 +73,7 @@ class RoleAdmin(admin.ModelAdmin):
         return super(RoleAdmin, self).get_form(request, obj, **defaults)
 
 
-#admin.site.register(Group, GroupAdmin)
+admin.site.register(Group, GroupAdmin)
 admin.site.register(Chapter, GroupAdmin)
 admin.site.register(School, GroupAdmin)
 admin.site.register(Company, GroupAdmin)

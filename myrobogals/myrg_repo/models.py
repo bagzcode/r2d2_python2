@@ -56,7 +56,7 @@ class RepoFile(models.Model):
                             max_length=63,
                             blank=False)
     file = models.FileField(_('file'),
-                            upload_to="/server/",
+                            upload_to="/server/",# not sure where is the upload destination for the file
                             blank=False)
     container = models.ForeignKey(RepoContainer)
     
