@@ -208,7 +208,7 @@ var myRG = myRG || {};
     
     
     // Prefetch user information
-    u.set("WHOAMI_XHR",f.fetchWhoAmI());
+    u.set("WHOAMI_XHR", f.fetchWhoAmI());
     u.set("MYROLES_XHR",f.fetchMyRoles());
     u.set("MENU_XHR",f.fetchResource("menu"));
     

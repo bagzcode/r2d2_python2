@@ -1,0 +1,156 @@
+<style>
+    #content {
+    }
+    
+    .messages {
+        font-size: 0.8em;
+        border: 1px solid;
+        padding: 1rem;
+        margin: 0.5rem;
+    }
+    
+    #neg-message {
+        background: #ffbaba;
+        color: #d8000c;
+    }
+    
+    #pos-message {
+        background: #dff2bf;
+        color: #4f8a10;
+    }
+    
+    .row .col.right {
+        text-align: right;
+    }
+</style>
+<div id="content" tabindex="0">
+    <div id="app-container">
+        <div id="hero">
+            <div class="blocks" style="width: auto;">
+                <h1>Repositories</h1>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 1.5rem;">
+            <div class="col" style="background: #fff; padding: 1.6rem; font-size: 1.25em;">
+                <div id="rcl">
+                    <div class="rcl-detail">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row" style="margin-top: 1.5rem;">
+        </div>
+    </div>
+</div>
+<script>
+    (function(){
+        var resourceName = "repo";
+        var appName = "Repo";
+    
+        var a = myRG.appStore;
+        var f = myRG.functions;
+        var u = myRG.userStore;
+        var jq = myRG.jq;
+        
+        // Grab jQuery objects from DOM elements
+        jq.repoconlist = $("#rcl");
+        jq.rcldetail = jq.repoconlist.children(".rcl-detail");
+        
+        var curr_state = f.fetchStateData();
+        
+        // Set body style classes
+        a.set("BODY_CLASS", 
+            [
+                "header-enabled",
+                "menu-enabled",
+                "stage-enabled"
+            ]);
+        
+        f.fetchMyRCL = function(api_data){
+        	
+            return f.fetchAPI("/api/1.0/repocontainers/list",api_data,"POST",true);
+    	}
+        
+        var api_data_rcl = {
+                    	"pagination": 
+                    		{
+    							"length": 10,
+    							"page": 0
+  							},
+  						"query": 
+  							[
+    							{
+      							"field": "title"
+    							},
+    							{
+      							"field": "body"
+    							}
+  							]
+                		}
+        
+        
+        
+        //var rcl =  f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
+        u.set("RCL",f.fetchMyRCL(api_data_rcl));//rcl);
+        //var rclstring = u.get("WHOAMI_OBJ");
+        //jq.repoconlist.find(".rc-list").text(rclstring.user.data.display_name);
+        $.when(u.get("RCL"))
+            .always(function(){
+                //clearTimeout(initLoadMessageTimer);
+            })
+                
+            .done(function(rclistdata){
+                //f.rc(rclistdata);//using RCListFunctions
+                //jq.repoconlist.find(".rc-list").text(rclistdata.rcl[1].data.title);
+                for (i = 0; i < rclistdata.meta.size; i++) { 
+    				jq.rcldetail.append(
+    					i+1 + ". " +
+    					"<a href='1'>" + rclistdata.rcl[i].data.title + "<a> by " + 
+    					rclistdata.rcl[i].data.body + "</br></br>"
+    				);
+    				//jq.repoconlist.children(".rc-title").children(".rc-author").append(rclistdata.rcl[i].data.body);
+				} 
+            })
+
+
+        // RClistFunctions
+        f.rc = function(rcldata) {
+            if (rcldata) {
+                u.set("RCL_OBJ",rcldata);
+            } else {
+                u.set("RCL_OBJ",0);
+            }
+            
+            f.assignRCL();
+        }
+        
+        f.assignRCL = function() {
+            var rcldata = u.get("RCL_OBJ");
+            
+            if (rcldata) {
+                //jq.repoconlist.find(".rc-list").text(rcldata.meta.size);
+                jq.repoconlist.find(".rc-list").text(rcldata.rcl[1].id);
+            } else {
+                jq.repoconlist.find(".rc-list").text(rcldata);
+            }     
+        }
+        
+        
+        // Update title, strip URL params by replacing state
+        f.pushState({
+            app: {
+                content: resourceName,
+                in_url: false
+            },
+            ref_state: {
+                content: curr_state,
+                in_url: false
+            }
+        }, appName, true);
+        myRG.jq.body.attr("data-app",resourceName);
+        ga('send', 'pageview');
+    
+        
+        
+    })();
+</script>

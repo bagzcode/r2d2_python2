@@ -126,7 +126,7 @@ class ListRepoContainers(RobogalsAPIView):
                             "meta": {
                                 "size": query_size
                             },
-                            "role_class": output_list
+                            "rcl": output_list
                         })
 
 class DeleteRepoContainers(RobogalsAPIView):
