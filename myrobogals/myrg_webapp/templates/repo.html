@@ -22,6 +22,109 @@
     .row .col.right {
         text-align: right;
     }
+    
+    
+    #app-container {
+        text-align: left;
+        
+        display: inline-block;
+        vertical-align: middle;
+        
+        width: 100%;
+        max-width: 30rem;
+        
+        color: #fff;
+        
+        font-size: 1.2rem;
+    }
+    
+    #app-container .logo {
+        background-image: url("/static/images/myrobogals.png");
+        background-position: center center;
+        background-repeat: no-repeat;
+        background-size: contain;
+        background-origin: content-box;
+        
+        padding: 1rem 0;
+        margin-right: 2rem;
+        
+        width: auto;
+        max-width: 25rem;
+    }
+    
+    #app-container .logo .filler {
+        padding-bottom: 15%;
+    }
+    
+    #app-container .container {
+        padding: 1rem;
+    }
+    
+    #app-container .container .row {
+        padding: 0.5rem;
+    }
+    
+    #app-container .container .col {
+        vertical-align: middle;
+    }
+    
+    #app-container .container .left.col {
+        width: 10rem;
+        font-weight: 500;
+    }
+    
+    #app-container input,
+    #app-container button {
+        border: 0;
+        background: #fff;
+        color: #000;
+        padding: 0.3rem;
+        
+        width: 100%;
+    }
+    
+    #app-container #reset-password,
+    #app-container #cancel-reset-password {
+        background: transparent;
+        padding: 0;
+        color: #fff;
+        width: auto;
+    }
+    
+    #app-container #login,
+    #app-container #submit-reset-password {
+        color: #fff;
+        font-weight: 500;
+        padding: 0.5rem 2rem;
+        width: auto;
+    }
+    
+    #reset_email {
+        font-style: italic;
+    }
+    
+    #links {
+        color: rgba(0,0,0,0.5);
+        margin: 1rem;
+    }
+    
+    #links a {
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    
+    html.small #reset-password,
+    html.small #cancel-reset-password {
+        margin-bottom: 1rem;
+    }
+    
+    html.large #content:before {
+        content: '';
+        display: inline-block;
+        height: 90%;
+        vertical-align: middle;
+    }
 </style>
 <div id="content" tabindex="0">
     <div id="app-container">
@@ -40,6 +143,72 @@
         </div>
         <div class="row" style="margin-top: 1.5rem;">
         </div>
+        
+        <div class="container bg-rg-dark-blue" >
+            <div id="message-container">
+                <div class="messages" id="neg-message"></div>
+                <div class="messages" id="pos-message"></div>
+            </div>
+            <form id="login-form" method="post">
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_user">User ID</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_user" type="text" name="userid" placeholder="User ID">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_role">Role ID</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_role" type="text" name="roleid" placeholder="Role ID">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_title">Title</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_title" type="text" name="title" placeholder="Title">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_bodyr">Body</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_bodyr" type="text" name="body" placeholder="Body">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_tags">Tags</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_tags" type="text" name="tags" placeholder="Tags">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_service">Service</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_service" type="text" name="service" placeholder="Service">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="right col">
+                        <input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
+                    </div>
+                </div>
+            </form>
+            
+        </div>
+    </div>
+    <div class="row" id="links">
+        <div class="col"><a href="http://www.robogals.org"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
     </div>
 </div>
 <script>
@@ -51,6 +220,8 @@
         var f = myRG.functions;
         var u = myRG.userStore;
         var jq = myRG.jq;
+        var i = 0;
+       
         
         // Grab jQuery objects from DOM elements
         jq.repoconlist = $("#rcl");
@@ -66,9 +237,28 @@
                 "stage-enabled"
             ]);
         
+        // Common elem
+        var el = a.set("JQELEM",{});
+        el.email = $("#id_email");
+        el.password = $("#id_password");
+
+        
+        function hideMessages() {
+            $(".messages").hide();
+        }
+        
+        function showMessage(html, type) {
+            hideMessages();
+            $("#"+type+"-message").html(html).show();
+        }
+        
         f.fetchMyRCL = function(api_data){
         	
             return f.fetchAPI("/api/1.0/repocontainers/list",api_data,"POST",true);
+    	}
+    	
+    	f.fetchUserInfo = function(api_data){
+            return f.fetchAPI("/api/1.0/users/list",api_data,"POST",true);
     	}
         
         var api_data_rcl = {
@@ -83,7 +273,7 @@
       							"field": "title"
     							},
     							{
-      							"field": "body"
+      							"field": "user"
     							}
   							]
                 		}
@@ -92,6 +282,7 @@
         
         //var rcl =  f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
         u.set("RCL",f.fetchMyRCL(api_data_rcl));//rcl);
+        var author;
         //var rclstring = u.get("WHOAMI_OBJ");
         //jq.repoconlist.find(".rc-list").text(rclstring.user.data.display_name);
         $.when(u.get("RCL"))
@@ -103,12 +294,53 @@
                 //f.rc(rclistdata);//using RCListFunctions
                 //jq.repoconlist.find(".rc-list").text(rclistdata.rcl[1].data.title);
                 for (i = 0; i < rclistdata.meta.size; i++) { 
-    				jq.rcldetail.append(
-    					i+1 + ". " +
-    					"<a href='1'>" + rclistdata.rcl[i].data.title + "<a> by " + 
-    					rclistdata.rcl[i].data.body + "</br></br>"
-    				);
-    				//jq.repoconlist.children(".rc-title").children(".rc-author").append(rclistdata.rcl[i].data.body);
+                	/*jq.rcldetail.append(
+    						i+1 
+    						+ ". <a href='1'>" 
+    						+ rclistdata.rcl[i].data.title 
+    						+ "<a> by " 
+    						+ rclistdata.rcl[i].data.user 
+    						//+ "</br></br>"
+    						);*/
+    				//get username from user model
+    				api_data_user_id = {
+                    			"pagination": 
+                    				{
+    									"length": 10,
+    									"page": 0
+  									},
+  								"query": 
+  									[
+    									{
+      										"field": "id",
+      										"search": rclistdata.rcl[i].data.user
+    									},
+										{
+											"field": "username"
+										}
+  									]
+                				}
+                	u.set("AUTHOR", f.fetchUserInfo(api_data_user_id));
+                	author = u.get("AUTHOR");//f.fetchUserInfo(api_data_user_id)
+    				//$.when(u.get("AUTHOR"))
+    				//author
+    					//.always(function(){
+                			//clearTimeout(initLoadMessageTimer);
+            			//})
+            
+            			//.done(function(authorinfo){
+    						//i = window.i;
+    						jq.rcldetail.append(
+    						//i 
+    						//+ ". <a href='1'>" 
+    						//+ rclistdata.rcl[i].data.title 
+    						//+ "<a> by " 
+    						//+ rclistdata.rcl[i].data.user 
+    						//+ authorinfo.user[0].data.username
+    						author.user[0].data.username
+    						+ "</br></br>"
+    						);
+    					//})
 				} 
             })
 
@@ -135,6 +367,11 @@
             }     
         }
         
+        // Autofocus on content (rather than <input>, which brings virtual keyboards up)
+        $("#content").focus();
+        
+        // Hide messages by default
+        hideMessages();
         
         // Update title, strip URL params by replacing state
         f.pushState({
