@@ -24,6 +24,9 @@ MAX_REPOS = 1
 ################################################################################
 class ListRepoContainers(RobogalsAPIView):
     def post(self, request, format=None):
+        from myrg_users.serializers import RobogalsUserSerializer
+        from myrg_users.models import RobogalsUser
+
         # request.DATA
         try:
             requested_fields = list(request.DATA.get("query"))
@@ -110,7 +113,6 @@ class ListRepoContainers(RobogalsAPIView):
         
         serialized_query = serializer(query, many=True)
         
-        
         # Output
         output_list = []
         
@@ -118,6 +120,14 @@ class ListRepoContainers(RobogalsAPIView):
             new_dict = {}
             new_dict.update({"id": repocontainer_object.pop("id")})
             new_dict.update({"data": repocontainer_object})
+            # added information for user(from user model) 
+            user_id = repocontainer_object.pop("user")
+            user = RobogalsUser.objects.filter(id = user_id)
+            user_serializer = RobogalsUserSerializer
+            user_serializer.Meta.fields = ("username",)
+            user_serializer_query = user_serializer(user)
+            user_data = user_serializer_query.data
+            new_dict.update({"user": user_data})
         
             output_list.append(new_dict)
         
@@ -283,7 +293,7 @@ class CreateRepoContainers(RobogalsAPIView):
     def post(self, request, format=None):
         # request.DATA
         try:
-            supplied_repocontainers = list(request.DATA.get("repo_container"))
+            supplied_repocontainers = list(request.DATA.get("rc"))
         except:
             return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -298,7 +308,7 @@ class CreateRepoContainers(RobogalsAPIView):
             skip_repocontainer = False
             repocontainer_create_dict = {}
             
-            try:
+            try:  
                 repocontainer_nonce = repocontainer_object.get("nonce")
                 repocontainer_data = dict(repocontainer_object.get("data"))
             except:
@@ -329,8 +339,8 @@ class CreateRepoContainers(RobogalsAPIView):
                 # Add to update data dict
                 repocontainer_create_dict.update({field: value})
             
-            if skip_repocontainer:
-                continue
+            if skip_repocontainer: 
+                continue  
             
             # Serialise and save
             serializer = RepoContainerSerializer
@@ -348,10 +358,10 @@ class CreateRepoContainers(RobogalsAPIView):
                 
         return Response({
             "fail": {
-                "nonce": repocontainer_create_dict#failed_repocontainer_creations
+                "nonce": serialized_repocontainer.errors #repocontainer_create_dict#failed_repocontainer_creations
             },
             "success": {
-                "nonce_id": serialized_repocontainer.errors#completed_repocontainer_creations
+                "nonce_id": completed_repocontainer_creations
             }
         })
         
@@ -377,7 +387,7 @@ class ListRepoFiles(RobogalsAPIView):
         
         if (pagination_page_index is None) or (pagination_page_length is None):
             return Response({"detail":"DATA_INSUFFICIENT"}, status=status.HTTP_400_BAD_REQUEST)
-        
+         
         pagination_page_index = int(pagination_page_index)
         pagination_page_length = int(pagination_page_length)
         
@@ -387,11 +397,11 @@ class ListRepoFiles(RobogalsAPIView):
         if pagination_start_index < 0 or pagination_end_index < 0:
             return Response({"detail":"PAGINATION_NEGATIVE_INDEX_UNSUPPORTED"}, status=status.HTTP_400_BAD_REQUEST)
         
-        
+         
         # Filter
         filter_dict = {}
         sort_fields = []
-        fields = ["id"]
+        fields = ["id"]  
         
         for field_object in requested_fields:
             field_name = field_object.get("field")
@@ -403,7 +413,7 @@ class ListRepoFiles(RobogalsAPIView):
                 return Response({"detail":"FIELD_IDENTIFIER_MISSING"}, status=status.HTTP_400_BAD_REQUEST)
             
             field_name = str(field_name)
-            
+             
             # Block protected fields like passwords
             if field_name in Role.PROTECTED_FIELDS:
                 return Response({"detail":"`{}` is a protected field.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
@@ -508,7 +518,7 @@ class EditRepoFiles(RobogalsAPIView):
                     failed_repofile_updates.update({repofile_id: "FIELD_IDENTIFIER_INVALID"})
                     skip_repofile = True
                     break
-                    
+                     
                 ################################################################
                 # Permission restricted editing to be implemented here
                 #
@@ -536,7 +546,7 @@ class EditRepoFiles(RobogalsAPIView):
             serialized_repofile = serializer(repofile_query, data=repofile_update_dict, partial=True)
         
             if serialized_repofile.is_valid():
-                try:
+                try: 
                     with transaction.atomic():
                         serialized_repofile.save()
                         completed_repofile_updates.append(repofile_id)
@@ -596,7 +606,7 @@ class CreateRepoFiles(RobogalsAPIView):
                     failed_repofile_creations.update({repofile_nonce: "FIELD_IDENTIFIER_INVALID"})
                     skip_repofile = True
                     break
-            
+             
             
                 # Add to update data dict
                 repofile_create_dict.update({field: value})

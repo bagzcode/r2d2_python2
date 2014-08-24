@@ -38,24 +38,6 @@
         font-size: 1.2rem;
     }
     
-    #app-container .logo {
-        background-image: url("/static/images/myrobogals.png");
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-size: contain;
-        background-origin: content-box;
-        
-        padding: 1rem 0;
-        margin-right: 2rem;
-        
-        width: auto;
-        max-width: 25rem;
-    }
-    
-    #app-container .logo .filler {
-        padding-bottom: 15%;
-    }
-    
     #app-container .container {
         padding: 1rem;
     }
@@ -82,26 +64,7 @@
         
         width: 100%;
     }
-    
-    #app-container #reset-password,
-    #app-container #cancel-reset-password {
-        background: transparent;
-        padding: 0;
-        color: #fff;
-        width: auto;
-    }
-    
-    #app-container #login,
-    #app-container #submit-reset-password {
-        color: #fff;
-        font-weight: 500;
-        padding: 0.5rem 2rem;
-        width: auto;
-    }
-    
-    #reset_email {
-        font-style: italic;
-    }
+      
     
     #links {
         color: rgba(0,0,0,0.5);
@@ -113,11 +76,6 @@
         text-decoration: none;
     }
     
-    
-    html.small #reset-password,
-    html.small #cancel-reset-password {
-        margin-bottom: 1rem;
-    }
     
     html.large #content:before {
         content: '';
@@ -134,14 +92,6 @@
             </div>
         </div>
         <div class="row" style="margin-top: 1.5rem;">
-            <div class="col" style="background: #fff; padding: 1.6rem; font-size: 1.25em;">
-                <div id="rcl">
-                    <div class="rcl-detail">
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="row" style="margin-top: 1.5rem;">
         </div>
         
         <div class="container bg-rg-dark-blue" >
@@ -149,7 +99,7 @@
                 <div class="messages" id="neg-message"></div>
                 <div class="messages" id="pos-message"></div>
             </div>
-            <form id="login-form" method="post">
+            <form id="create-form" method="post">
                 <div class="row">
                     <div class="left col">
                         <label for="id_user">User ID</label>
@@ -206,6 +156,14 @@
             </form>
             
         </div>
+        
+        <div class="row" style="margin-top: 1.5rem;">
+            <div class="col" id="rcl-detail" style="background: #000; padding: 1.6rem; font-size: 1.25em;">
+            </div>
+        </div>
+        
+        
+        
     </div>
     <div class="row" id="links">
         <div class="col"><a href="http://www.robogals.org"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
@@ -224,8 +182,7 @@
        
         
         // Grab jQuery objects from DOM elements
-        jq.repoconlist = $("#rcl");
-        jq.rcldetail = jq.repoconlist.children(".rcl-detail");
+        jq.rcldetail = $("#rcl-detail")
         
         var curr_state = f.fetchStateData();
         
@@ -239,8 +196,12 @@
         
         // Common elem
         var el = a.set("JQELEM",{});
-        el.email = $("#id_email");
-        el.password = $("#id_password");
+        el.user = $("#id_user");
+        el.role = $("#id_role");
+		el.title = $("#id_title");
+        el.body = $("#id_body");
+        el.tags = $("#id_tags");
+        el.service = $("id_service");
 
         
         function hideMessages() {
@@ -252,14 +213,17 @@
             $("#"+type+"-message").html(html).show();
         }
         
+        //API
         f.fetchMyRCL = function(api_data){
         	
             return f.fetchAPI("/api/1.0/repocontainers/list",api_data,"POST",true);
     	}
     	
-    	f.fetchUserInfo = function(api_data){
-            return f.fetchAPI("/api/1.0/users/list",api_data,"POST",true);
+    	f.fetchCreateMyRC = function(api_data){
+            return f.fetchAPI("/api/1.0/repocontainers/create",api_data,"POST",true);
     	}
+    	
+    	
         
         var api_data_rcl = {
                     	"pagination": 
@@ -282,7 +246,6 @@
         
         //var rcl =  f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
         u.set("RCL",f.fetchMyRCL(api_data_rcl));//rcl);
-        var author;
         //var rclstring = u.get("WHOAMI_OBJ");
         //jq.repoconlist.find(".rc-list").text(rclstring.user.data.display_name);
         $.when(u.get("RCL"))
@@ -293,79 +256,65 @@
             .done(function(rclistdata){
                 //f.rc(rclistdata);//using RCListFunctions
                 //jq.repoconlist.find(".rc-list").text(rclistdata.rcl[1].data.title);
+                //jq.rcldetail.append(rclistdata.meta.size);
                 for (i = 0; i < rclistdata.meta.size; i++) { 
-                	/*jq.rcldetail.append(
+                
+                	jq.rcldetail.append(
     						i+1 
     						+ ". <a href='1'>" 
     						+ rclistdata.rcl[i].data.title 
     						+ "<a> by " 
-    						+ rclistdata.rcl[i].data.user 
-    						//+ "</br></br>"
-    						);*/
-    				//get username from user model
-    				api_data_user_id = {
-                    			"pagination": 
-                    				{
-    									"length": 10,
-    									"page": 0
-  									},
-  								"query": 
-  									[
-    									{
-      										"field": "id",
-      										"search": rclistdata.rcl[i].data.user
-    									},
-										{
-											"field": "username"
-										}
-  									]
-                				}
-                	u.set("AUTHOR", f.fetchUserInfo(api_data_user_id));
-                	author = u.get("AUTHOR");//f.fetchUserInfo(api_data_user_id)
-    				//$.when(u.get("AUTHOR"))
-    				//author
-    					//.always(function(){
-                			//clearTimeout(initLoadMessageTimer);
-            			//})
-            
-            			//.done(function(authorinfo){
-    						//i = window.i;
-    						jq.rcldetail.append(
-    						//i 
-    						//+ ". <a href='1'>" 
-    						//+ rclistdata.rcl[i].data.title 
-    						//+ "<a> by " 
-    						//+ rclistdata.rcl[i].data.user 
-    						//+ authorinfo.user[0].data.username
-    						author.user[0].data.username
+    						+ rclistdata.rcl[i].user[0].username
     						+ "</br></br>"
     						);
-    					//})
 				} 
+				//jq.rcldetail.append(JSON.stringify(author));
+				
             })
 
-
-        // RClistFunctions
-        f.rc = function(rcldata) {
-            if (rcldata) {
-                u.set("RCL_OBJ",rcldata);
-            } else {
-                u.set("RCL_OBJ",0);
-            }
-            
-            f.assignRCL();
-        }
         
-        f.assignRCL = function() {
-            var rcldata = u.get("RCL_OBJ");
+        // Create form
+        $("#create-form").submit(function(e){
+            e.preventDefault();
             
-            if (rcldata) {
-                //jq.repoconlist.find(".rc-list").text(rcldata.meta.size);
-                jq.repoconlist.find(".rc-list").text(rcldata.rcl[1].id);
-            } else {
-                jq.repoconlist.find(".rc-list").text(rcldata);
-            }     
-        }
+            f.setTray("Loading...","indeterminate",false);
+            
+            hideMessages();
+            
+            var api_data_createRC = {
+  				"rc": [
+    				{
+      				"data": {
+        				"user": "765ae9d3d56f48dc89621fb9628cdacc",//el.user
+        				"role": "711f64eda76e458a970c7ef7d6d87cad",//el.role
+        				"title": "test from interface",//el.title
+        				"body": "test",//el.body
+        				"tags": "masa ga bisa",//el.tags
+        				"service": "20"//el.service
+      						},
+      				"nonce": "1"
+    				}
+  				]
+			}			
+                            
+            var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
+            
+            api_rcCreate
+                .done(function(){
+                    //f.gotoApp("repo");
+                    f.closeTray();
+                    showMessage("Repository Container created successfully","pos");
+                    
+                    
+                })
+                .fail(function(xhr){
+                    f.closeTray();
+                    showMessage("Repository Container created failed.<br><br>Please try again.","neg");
+                });
+                
+            
+            
+        });
         
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();
