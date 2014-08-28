@@ -85,14 +85,15 @@
     }
 </style>
 <div id="content" tabindex="0">
-    <div id="hero">
-        <div class="blocks" style="width: auto;">
-            <h1>Repositories</h1>
+    <div id="app-container">
+        <div id="hero">
+            <div class="blocks" style="width: auto;">
+                <h1>Repositories</h1>
+            </div>
         </div>
-    </div>
-    <div class="row" style="margin-top: 1.5rem;">
-    </div>
-     <div id="app-container">
+        <div class="row" style="margin-top: 1.5rem;">
+        </div>
+        
         <div class="container bg-rg-dark-blue" >
             <div id="message-container">
                 <div class="messages" id="neg-message"></div>
@@ -139,19 +140,23 @@
             </form>
             
         </div>
-    </div>  
-    <div class="row" style="margin-top: 1.5rem;">
-            <div class="col" id="rcl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;"></div>
+        
+        <div class="row" style="margin-top: 1.5rem;">
+            <div class="col" id="rcl-detail" style="background: #000; padding: 1.6rem; font-size: 1.25em;">
+            </div>
+        </div>
+        
+        
+        
     </div>
     <div class="row" id="links">
         <div class="col"><a href="http://www.robogals.org"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
     </div>
-    
 </div>
 <script>
     (function(){
-        var resourceName = "repo";
-        var appName = "Repo";
+        var resourceName = "user";
+        var appName = "User";
     
         var a = myRG.appStore;
         var f = myRG.functions;
@@ -161,7 +166,7 @@
        
         
         // Grab jQuery objects from DOM elements
-        jq.rcldetail = $("#rcl-detail");
+        jq.rcldetail = $("#rcl-detail")
         
         var curr_state = f.fetchStateData();
         
@@ -201,64 +206,53 @@
   						"query": 
   							[
     							{
-      							"field": "user"
+      							"field": "username"
     							},
     							{
-      							"field": "title"
+      							"field": "primary_email"
     							},
     							{
-      							"field": "date_created"
+      							"field": "given_name"
     							}
   							]
                 		}
-            return f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
+            return f.fetchAPI("/api/1.0/users/list",api_data_rcl,"POST",true);
     	}
     	
     	f.fetchCreateMyRC = function(api_data){
-            return f.fetchAPI("/api/1.0/repocontainers/create",api_data,"POST",true);
-    	}
-    	
-    	f.deleteMyRC = function(api_data){
-    		var del_api_data = {
-                    	"id": [ 
-                    			api_data
-  							]
-                		}
-            return f.fetchAPI("/api/1.0/repocontainers/delete",del_api_data,"POST",true);
+            return f.fetchAPI("/api/1.0/users/create",api_data,"POST",true);
     	}
     	
     
         
-        var rcl = f.fetchMyRCL();
-        
-        rcl 
+        //var rcl = f.fetchMyRCL();
+        a.set("RCL",f.fetchMyRCL());
+        jq.rcldetail.append(JSON.stringify(a.get("RCL")));
+        /*
+        //rcl 
+        $.when(a.get("RCL"))  
             .always(function(){
                 //clearTimeout(initLoadMessageTimer);
             })
             
             .done(function(rclistdata){
-            	//jq.rcldetail.append("<div class='my-div'>");
+                //f.rc(rclistdata);//using RCListFunctions
+                //jq.repoconlist.find(".rc-list").text(rclistdata.rcl[1].data.title);
+                //jq.rcldetail.append(rclistdata.meta.size);
                 for (i = 0; i < rclistdata.meta.size; i++) { 
                 
                 	jq.rcldetail.append(
     						i+1 
-    						+ ". <a class='info_rfl' href='#'>"//repo-files/"+rclistdata.rcl[i].id+"'>" 
+    						+ ". <a href='1'>" 
     						+ rclistdata.rcl[i].data.title 
     						+ "<a> by " 
     						+ rclistdata.rcl[i].user[0].username
-    						+ "</br> date created: "
-    						+ rclistdata.rcl[i].data.date_created
-    						//+ "</br><input type='submit' value='Edit'>"
-    						//+ "<input type='submit' value='Delete'>"
-    						+ "</br> <a href='"+rclistdata.rcl[i].id+"'>edit<a> "
-    						+ "| <a href='"+f.deleteMyRC(rclistdata.rcl[i].id)+"'>delete<a> "
-    						+ "</br><a class='info_link' href='#'>test</a>"
     						+ "</br></br>"
     						);
 				} 
-				//jq.rcldetail.append("</div>");
+				//jq.rcldetail.append(JSON.stringify(author));
 				
-            })
+            })*/
 
         
         // Create form
@@ -270,21 +264,18 @@
             hideMessages();
             
             var api_data_createRC = {
-  				"rc": [
+  				"user": [
     				{
       				"data": {
-        				"user": "765ae9d3d56f48dc89621fb9628cdacc",
-        				"role": "711f64eda76e458a970c7ef7d6d87cad",
-        				"title": el.title.val(),
-        				"body": el.body.val(),
-        				"tags": el.tags.val(),
-        				"service": el.service.val()
+        				"username": el.title.val(),
+        				"primary_email": el.body.val(),
+        				"given_name": el.tags.val()
       						},
       				"nonce": "1"
     				}
   				]
 			}			
-             //jq.rcldetail.append(JSON.stringify(api_data_createRC));               
+             jq.rcldetail.append(JSON.stringify(api_data_createRC));               
             var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
             
             api_rcCreate
@@ -303,26 +294,6 @@
             
             
         });
-        
-        $('.my-div a').click(function(e){
-  			var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt); 
-  			//f.gotoApp($(this).attr("href"), true);
-		});
-
-		$(".info_rfl").click(function(e){
-            //e.preventDefault();
-            f.setTray("Loading...","indeterminate",false);
-            var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt);
-        });
-        
-        $("#rcl-detail").find('.info_link').click(function(){
-    		alert($(this).attr('href'));
-   			 // or alert($(this).hash();
-  		});
         
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();

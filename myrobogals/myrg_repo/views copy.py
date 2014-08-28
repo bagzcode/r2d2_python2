@@ -123,14 +123,13 @@ class ListRepoContainers(RobogalsAPIView):
             new_dict.update({"id": repocontainer_object.pop("id")})
             new_dict.update({"data": repocontainer_object})
             # added information for user(from user model) 
-            user_id = repocontainer_object.pop("user")
-            if user_id:
-                user = RobogalsUser.objects.filter(id = user_id)
-                user_serializer = RobogalsUserSerializer
-                user_serializer.Meta.fields = ("username",)
-                user_serializer_query = user_serializer(user, many=True)
-                user_data = user_serializer_query.data
-                new_dict.update({"user": user_data})
+            #user_id = repocontainer_object.pop("user")
+            #user = RobogalsUser.objects.filter(id = user_id)
+            #user_serializer = RobogalsUserSerializer
+            #user_serializer.Meta.fields = ("username",)
+            #user_serializer_query = user_serializer(user, many=True)
+            #user_data = user_serializer_query.data
+            #new_dict.update({"user": user_data})
         
             output_list.append(new_dict)  
         
@@ -418,7 +417,7 @@ class ListRepoFiles(RobogalsAPIView):
             field_name = str(field_name)
              
             # Block protected fields like passwords
-            if field_name in RepoFile.PROTECTED_FIELDS:
+            if field_name in Role.PROTECTED_FIELDS:
                 return Response({"detail":"`{}` is a protected field.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
             
             # Non-valid field names
@@ -444,7 +443,7 @@ class ListRepoFiles(RobogalsAPIView):
         
         
         # Build query
-        query = RepoFile.objects.all()
+        query = RepoFile.objects.filter(Q(date_start__lte=timezone.now()) & (Q(date_end__isnull=True) | Q(date_end__gte=timezone.now())))
         query = query.filter(**filter_dict)
         query = query.order_by(*sort_fields)
         
@@ -475,14 +474,14 @@ class ListRepoFiles(RobogalsAPIView):
                             "meta": {
                                 "size": query_size
                             },
-                            "rfl": output_list
+                            "role": output_list
                         })
 
 class EditRepoFiles(RobogalsAPIView):
     def post(self, request, format=None):
         # request.DATA
         try:
-            supplied_repofiles = list(request.DATA.get("rf"))
+            supplied_repofiles = list(request.DATA.get("repofile"))
         except:
             return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -571,7 +570,7 @@ class CreateRepoFiles(RobogalsAPIView):
     def post(self, request, format=None):
         # request.DATA
         try:
-            supplied_repofiles = list(request.DATA.get("rf"))
+            supplied_repofiles = list(request.DATA.get("repofile"))
         except:
             return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -620,7 +619,7 @@ class CreateRepoFiles(RobogalsAPIView):
             
             # Serialise and save
             serializer = RepoFileSerializer
-            serialized_repofile = serializer(data=repofile_create_dict, files=request.FILES)
+            serialized_repofile = serializer(data=repofile_create_dict)
             
             if serialized_repofile.is_valid():
                 try:
@@ -638,10 +637,7 @@ class CreateRepoFiles(RobogalsAPIView):
             },
             "success": {
                 "nonce_id": completed_repofile_creations
-            },
-            "error": {
-                "message": serialized_repofile.errors
-            },
+            }
         })
 
         

@@ -87,7 +87,7 @@
 <div id="content" tabindex="0">
     <div id="hero">
         <div class="blocks" style="width: auto;">
-            <h1>Repositories</h1>
+            <h1>File Repositories</h1>
         </div>
     </div>
     <div class="row" style="margin-top: 1.5rem;">
@@ -101,34 +101,26 @@
             <form id="create-form" method="post">
                 <div class="row">
                     <div class="left col">
-                        <label for="id_title">Title</label>
+                        <label for="id_name">Name</label>
                     </div>
                     <div class="col">
-                        <input id="id_title" type="text" name="title" placeholder="Title">
+                        <input id="id_name" type="text" name="name" placeholder="Name">
                     </div>
                 </div>
                 <div class="row">
                     <div class="left col">
-                        <label for="id_body">Body</label>
+                        <label for="id_file">File</label>
                     </div>
                     <div class="col">
-                        <input id="id_body" type="text" name="body" placeholder="Body">
+                        <input id="id_file" type="file" name="file" placeholder="File">
                     </div>
                 </div>
                 <div class="row">
                     <div class="left col">
-                        <label for="id_tags">Tags</label>
+                        <label for="id_container">Container</label>
                     </div>
                     <div class="col">
-                        <input id="id_tags" type="text" name="tags" placeholder="Tags">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_service">Service</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_service" type="text" name="service" placeholder="Service">
+                        <input id="id_container" type="text" name="container" placeholder="Container">
                     </div>
                 </div>
                 <div class="row">
@@ -141,17 +133,17 @@
         </div>
     </div>  
     <div class="row" style="margin-top: 1.5rem;">
-            <div class="col" id="rcl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;"></div>
+            <div class="col" id="rfl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;">
+            </div>
     </div>
     <div class="row" id="links">
         <div class="col"><a href="http://www.robogals.org"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
     </div>
-    
 </div>
 <script>
     (function(){
-        var resourceName = "repo";
-        var appName = "Repo";
+        var resourceName = "repo-files";
+        var appName = "repo-files";
     
         var a = myRG.appStore;
         var f = myRG.functions;
@@ -161,7 +153,7 @@
        
         
         // Grab jQuery objects from DOM elements
-        jq.rcldetail = $("#rcl-detail");
+        jq.rfldetail = $("#rfl-detail")
         
         var curr_state = f.fetchStateData();
         
@@ -175,11 +167,9 @@
         
         // Common elem
         var el = a.set("JQELEM",{});
-		el.title = $("#id_title");
-        el.body = $("#id_body");
-        el.tags = $("#id_tags");
-        el.service = $("id_service");
-
+		el.name = $("#id_name");
+        el.file = $("#id_file");
+        el.container = $("#id_container");
         
         function hideMessages() {
             $(".messages").hide();
@@ -191,8 +181,8 @@
         }
         
         //API
-        f.fetchMyRCL = function(){
-        	var api_data_rcl = {
+        f.fetchMyRFL = function(){
+        	var api_data_rfl = {
                     	"pagination": 
                     		{
     							"length": 10,
@@ -201,62 +191,47 @@
   						"query": 
   							[
     							{
-      							"field": "user"
+      							"field": "container"
     							},
     							{
-      							"field": "title"
+      							"field": "name"
     							},
     							{
-      							"field": "date_created"
+      							"field": "file"
     							}
   							]
                 		}
-            return f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
+            return f.fetchAPI("/api/1.0/repofiles/list",api_data_rfl,"POST",true);
     	}
     	
-    	f.fetchCreateMyRC = function(api_data){
-            return f.fetchAPI("/api/1.0/repocontainers/create",api_data,"POST",true);
-    	}
-    	
-    	f.deleteMyRC = function(api_data){
-    		var del_api_data = {
-                    	"id": [ 
-                    			api_data
-  							]
-                		}
-            return f.fetchAPI("/api/1.0/repocontainers/delete",del_api_data,"POST",true);
+    	f.fetchCreateMyRF = function(api_data){
+            return f.fetchAPI("/api/1.0/repofiles/create",api_data,"POST",true);
     	}
     	
     
         
-        var rcl = f.fetchMyRCL();
+        var rfl = f.fetchMyRFL();
         
-        rcl 
+        rfl 
             .always(function(){
                 //clearTimeout(initLoadMessageTimer);
             })
             
-            .done(function(rclistdata){
-            	//jq.rcldetail.append("<div class='my-div'>");
-                for (i = 0; i < rclistdata.meta.size; i++) { 
+            .done(function(rflistdata){
+                for (i = 0; i < rflistdata.meta.size; i++) { 
                 
-                	jq.rcldetail.append(
+                	jq.rfldetail.append(
     						i+1 
-    						+ ". <a class='info_rfl' href='#'>"//repo-files/"+rclistdata.rcl[i].id+"'>" 
-    						+ rclistdata.rcl[i].data.title 
+    						+ ". <a href='"+rflistdata.rfl[i].data.file+"'>" 
+    						+ rflistdata.rfl[i].data.name 
     						+ "<a> by " 
-    						+ rclistdata.rcl[i].user[0].username
-    						+ "</br> date created: "
-    						+ rclistdata.rcl[i].data.date_created
-    						//+ "</br><input type='submit' value='Edit'>"
-    						//+ "<input type='submit' value='Delete'>"
-    						+ "</br> <a href='"+rclistdata.rcl[i].id+"'>edit<a> "
-    						+ "| <a href='"+f.deleteMyRC(rclistdata.rcl[i].id)+"'>delete<a> "
-    						+ "</br><a class='info_link' href='#'>test</a>"
+    						+ rflistdata.rfl[i].data.container
+    						+ "</br> file address: "
+    						+ rflistdata.rfl[i].data.file
     						+ "</br></br>"
     						);
 				} 
-				//jq.rcldetail.append("</div>");
+				//jq.rfldetail.append(JSON.stringify(author));
 				
             })
 
@@ -269,60 +244,37 @@
             
             hideMessages();
             
-            var api_data_createRC = {
-  				"rc": [
+            var api_data_createRF = {
+  				"rf": [
     				{
       				"data": {
-        				"user": "765ae9d3d56f48dc89621fb9628cdacc",
-        				"role": "711f64eda76e458a970c7ef7d6d87cad",
-        				"title": el.title.val(),
-        				"body": el.body.val(),
-        				"tags": el.tags.val(),
-        				"service": el.service.val()
+        				"name": el.name.val(),
+        				"file": el.file.val(),
+        				"container": el.container.val()
       						},
       				"nonce": "1"
     				}
   				]
 			}			
-             //jq.rcldetail.append(JSON.stringify(api_data_createRC));               
-            var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
+             jq.rfldetail.append(JSON.stringify(api_data_createRF));               
+            var api_rfCreate = f.fetchCreateMyRF(api_data_createRF);
             
-            api_rcCreate
+            api_rfCreate
                 .done(function(){
                     //f.loadApp("repo");
                     f.closeTray();
-                    showMessage("Repository Container created successfully","pos");
+                    showMessage("File Repository created successfully","pos");
                     
                     
                 })
                 .fail(function(xhr){
                     f.closeTray();
-                    showMessage("Repository Container created failed.<br><br>Please try again.","neg");
+                    showMessage("File Repository created failed.<br><br>Please try again.","neg");
                 });
                 
             
             
         });
-        
-        $('.my-div a').click(function(e){
-  			var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt); 
-  			//f.gotoApp($(this).attr("href"), true);
-		});
-
-		$(".info_rfl").click(function(e){
-            //e.preventDefault();
-            f.setTray("Loading...","indeterminate",false);
-            var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt);
-        });
-        
-        $("#rcl-detail").find('.info_link').click(function(){
-    		alert($(this).attr('href'));
-   			 // or alert($(this).hash();
-  		});
         
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();
