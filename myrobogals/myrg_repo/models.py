@@ -49,6 +49,8 @@ class RepoContainer(models.Model):
     
     # Fields that cannot be written to
     READONLY_FIELDS = ("id","date_created",)
+    
+    
 
 #@python_2_unicode_compatible
 class RepoFile(models.Model):
@@ -68,3 +70,6 @@ class RepoFile(models.Model):
     
     # Fields that cannot be written to
     READONLY_FIELDS = ("id",)
+    
+    def __str__(self):
+        return self.name

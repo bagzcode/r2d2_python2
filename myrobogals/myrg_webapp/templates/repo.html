@@ -55,6 +55,7 @@
         font-weight: 500;
     }
     
+    #app-container select,
     #app-container input,
     #app-container button {
         border: 0;
@@ -128,7 +129,13 @@
                         <label for="id_service">Service</label>
                     </div>
                     <div class="col">
-                        <input id="id_service" type="text" name="service" placeholder="Service">
+                    	<select id="id_service" name="service">
+  							<option value="0">Private</option>
+  							<option value="10">Managers of your Robogals chapter</option>
+  							<option value="20">Everyone in your Robogals chapter</option>
+  							<option value="50">All Robogals chapters</option>
+  							<option value="99">Public</option>
+						</select>
                     </div>
                 </div>
                 <div class="row">
@@ -144,7 +151,7 @@
             <div class="col" id="rcl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;"></div>
     </div>
     <div class="row" id="links">
-        <div class="col"><a href="http://www.robogals.org"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
+        <div class="col"><a href="http://localhost:3000/?app=repo-files"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
     </div>
     
 </div>
@@ -155,9 +162,7 @@
     
         var a = myRG.appStore;
         var f = myRG.functions;
-        var u = myRG.userStore;
         var jq = myRG.jq;
-        var i = 0;
        
         
         // Grab jQuery objects from DOM elements
@@ -178,7 +183,7 @@
 		el.title = $("#id_title");
         el.body = $("#id_body");
         el.tags = $("#id_tags");
-        el.service = $("id_service");
+        el.service = $("#id_service");
 
         
         function hideMessages() {
@@ -228,7 +233,7 @@
     	}
     	
     
-        
+        //call listing function and show them on the interface
         var rcl = f.fetchMyRCL();
         
         rcl 
@@ -237,28 +242,55 @@
             })
             
             .done(function(rclistdata){
-            	//jq.rcldetail.append("<div class='my-div'>");
+            	
                 for (i = 0; i < rclistdata.meta.size; i++) { 
-                
-                	jq.rcldetail.append(
-    						i+1 
-    						+ ". <a class='info_rfl' href='#'>"//repo-files/"+rclistdata.rcl[i].id+"'>" 
-    						+ rclistdata.rcl[i].data.title 
-    						+ "<a> by " 
+                	var no = i + 1;
+                	$("#rcl-detail").append(
+    						"<div class='info_rcl'>"
+    						+ no 
+    						+ ". <a class='rfl_link' href='1'>"//repo-files/"+rclistdata.rcl[i].id+"'>" 
+    						+ rclistdata.rcl[i].data.title +"</a>"
+    						+ "</a> by " 
     						+ rclistdata.rcl[i].user[0].username
     						+ "</br> date created: "
     						+ rclistdata.rcl[i].data.date_created
     						//+ "</br><input type='submit' value='Edit'>"
     						//+ "<input type='submit' value='Delete'>"
     						+ "</br> <a href='"+rclistdata.rcl[i].id+"'>edit<a> "
-    						+ "| <a href='"+f.deleteMyRC(rclistdata.rcl[i].id)+"'>delete<a> "
-    						+ "</br><a class='info_link' href='#'>test</a>"
-    						+ "</br></br>"
+    						+ "| <a href='"+rclistdata.rcl[i].id+"'>delete<a> "
+    						+ "</div></br>"
     						);
 				} 
-				//jq.rcldetail.append("</div>");
+				//f.deleteMyRC(rclistdata.rcl[i].id)"+f.gotoApp('repo-files',true)+"
 				
             })
+        
+        $('div.info_rcl a').click(function(){
+            //e.preventDefault();
+            alert($(this).attr('href'));
+            //f.setTray("Loading...","indeterminate",false);
+            //var txt = $(e.target).text();
+  			//console.log(txt);
+  			//jq.rcldetail.append(txt);
+  			f.loadApp("repo-files");
+        });
+        
+        $('.info_rcl a').click(function(){
+            //e.preventDefault();
+            alert($(this).attr('href'));
+            //f.setTray("Loading...","indeterminate",false);
+            //var txt = $(e.target).text();
+  			//console.log(txt);
+  			//jq.rcldetail.append(txt);
+  			f.loadApp("repo-files");
+        });
+        
+        
+        $('.rfl_link').click(function(){
+    		alert($(this).attr('href'));
+    		// or alert($(this).hash();
+    		f.loadApp("repo-files");
+  		});
 
         
         // Create form
@@ -278,13 +310,13 @@
         				"title": el.title.val(),
         				"body": el.body.val(),
         				"tags": el.tags.val(),
-        				"service": el.service.val()
+        				"service": el.service.find(":selected").attr('value')
       						},
       				"nonce": "1"
     				}
   				]
 			}			
-             //jq.rcldetail.append(JSON.stringify(api_data_createRC));               
+            //jq.rcldetail.append(JSON.stringify(api_data_createRC));               
             var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
             
             api_rcCreate
@@ -303,26 +335,8 @@
             
             
         });
-        
-        $('.my-div a').click(function(e){
-  			var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt); 
-  			//f.gotoApp($(this).attr("href"), true);
-		});
 
-		$(".info_rfl").click(function(e){
-            //e.preventDefault();
-            f.setTray("Loading...","indeterminate",false);
-            var txt = $(e.target).text();
-  			//console.log(txt);
-  			jq.rcldetail.append(txt);
-        });
-        
-        $("#rcl-detail").find('.info_link').click(function(){
-    		alert($(this).attr('href'));
-   			 // or alert($(this).hash();
-  		});
+		
         
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();

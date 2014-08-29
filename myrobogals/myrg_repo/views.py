@@ -5,6 +5,7 @@ from django.utils.encoding import smart_text
 
 
 from myrg_core.classes import RobogalsAPIView
+from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
@@ -100,7 +101,7 @@ class ListRepoContainers(RobogalsAPIView):
         
         
         # Build query
-        query = RepoContainer.objects.all()#filter(service__gt=0)
+        query = RepoContainer.objects.filter(service__gt=0)
         query = query.filter(**filter_dict)
         query = query.order_by(*sort_fields)
         
@@ -116,15 +117,16 @@ class ListRepoContainers(RobogalsAPIView):
         serialized_query = serializer(query, many=True)
         
         # Output
-        output_list = [] 
+        output_list = []  
         
         for repocontainer_object in serialized_query.data:
             new_dict = {}
             new_dict.update({"id": repocontainer_object.pop("id")})
             new_dict.update({"data": repocontainer_object})
-            # added information for user(from user model) 
-            user_id = repocontainer_object.pop("user")
-            if user_id:
+            # retrieve username information(from user model) when 'user' attribut is defined on the request
+            # http://stackoverflow.com/questions/11748234/
+            if repocontainer_object.get('user'):
+                user_id = repocontainer_object.pop("user")
                 user = RobogalsUser.objects.filter(id = user_id)
                 user_serializer = RobogalsUserSerializer
                 user_serializer.Meta.fields = ("username",)
@@ -132,7 +134,7 @@ class ListRepoContainers(RobogalsAPIView):
                 user_data = user_serializer_query.data
                 new_dict.update({"user": user_data})
         
-            output_list.append(new_dict)  
+            output_list.append(new_dict)   
         
         
         return Response({ 
@@ -196,7 +198,7 @@ class DeleteRepoContainers(RobogalsAPIView):
         
         return Response({
             "fail": {
-                "id": failed_ids
+                "id": failed_ids,
             },
             "success": {
                 "id": affected_ids
@@ -568,6 +570,7 @@ class EditRepoFiles(RobogalsAPIView):
         })
 
 class CreateRepoFiles(RobogalsAPIView):
+    #parser_classes = (FileUploadParser,)
     def post(self, request, format=None):
         # request.DATA
         try:
