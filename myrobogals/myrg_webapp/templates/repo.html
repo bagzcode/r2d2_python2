@@ -99,7 +99,7 @@
                 <div class="messages" id="neg-message"></div>
                 <div class="messages" id="pos-message"></div>
             </div>
-            <form id="create-form" method="post">
+            <form id="create-formRC" method="post">
                 <div class="row">
                     <div class="left col">
                         <label for="id_title">Title</label>
@@ -130,11 +130,10 @@
                     </div>
                     <div class="col">
                     	<select id="id_service" name="service">
-  							<option value="0">Private</option>
   							<option value="10">Managers of your Robogals chapter</option>
   							<option value="20">Everyone in your Robogals chapter</option>
   							<option value="50">All Robogals chapters</option>
-  							<option value="99">Public</option>
+  							<option value="99" selected >Public</option>
 						</select>
                     </div>
                 </div>
@@ -145,8 +144,32 @@
                 </div>
             </form>
             
+            <form id="create-formRF" method="post" >
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_name">Name</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_name" type="text" name="name" placeholder="Name">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="left col">
+                        <label for="id_file">File</label>
+                    </div>
+                    <div class="col">
+                        <input id="id_file" type="file" name="file" placeholder="File">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="right col">
+                        <input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
+                    </div>
+                </div>
+            </form>
+            
         </div>
-    </div>  
+    </div>
     <div class="row" style="margin-top: 1.5rem;">
             <div class="col" id="rcl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;"></div>
     </div>
@@ -160,9 +183,15 @@
         var resourceName = "repo";
         var appName = "Repo";
     
+        var u = myRG.userStore;
         var a = myRG.appStore;
         var f = myRG.functions;
         var jq = myRG.jq;
+        
+        //Set global variable for RC and RF
+        var rc_id = "";
+        var rc_page = "0";
+        var rc_tot_list = "";
        
         
         // Grab jQuery objects from DOM elements
@@ -180,10 +209,15 @@
         
         // Common elem
         var el = a.set("JQELEM",{});
+		//RC Form
 		el.title = $("#id_title");
         el.body = $("#id_body");
         el.tags = $("#id_tags");
         el.service = $("#id_service");
+        //RF Form
+        el.name = $("#id_name");
+        el.file = $("#id_file");
+        //el.container = $("#id_container");
 
         
         function hideMessages() {
@@ -196,26 +230,39 @@
         }
         
         //API
-        f.fetchMyRCL = function(){
+        f.fetchMyRCL = function(rc_id, rc_page){
         	var api_data_rcl = {
                     	"pagination": 
                     		{
-    							"length": 10,
-    							"page": 0
+    							"length": 2,
+    							"page": rc_page
   							},
   						"query": 
   							[
     							{
-      							"field": "user"
+      							"field": "id",
+      							"search": rc_id
     							},
     							{
       							"field": "title"
     							},
     							{
+      							"field": "body"
+    							},
+    							{
+      							"field": "tags"
+    							},
+    							{
+      							"field": "service"
+    							},
+    							{
       							"field": "date_created"
+    							},
+    							{
+      							"field": "date_updated"
     							}
   							]
-                		}
+                		} 
             return f.fetchAPI("/api/1.0/repocontainers/list",api_data_rcl,"POST",true);
     	}
     	
@@ -232,69 +279,137 @@
             return f.fetchAPI("/api/1.0/repocontainers/delete",del_api_data,"POST",true);
     	}
     	
+    	f.fetchMyRFL = function(container_id){
+        	var api_data_rfl = {
+                    	"pagination": 
+                    		{
+    							"length": 10,
+    							"page": 0
+  							},
+  						"query": 
+  							[
+    							{
+      							"field": "container",
+      							"search": container_id
+    							},
+    							{
+      							"field": "name"
+    							},
+    							{
+      							"field": "file"
+    							}
+  							]
+                		}
+            return f.fetchAPI("/api/1.0/repofiles/list",api_data_rfl,"POST",true);
+    	}
+    	
+    	f.fetchCreateMyRF = function(api_data){
+            return f.fetchAPI("/api/1.0/repofiles/create",api_data,"POST",true);
+    	}
+    	
     
         //call listing function and show them on the interface
-        var rcl = f.fetchMyRCL();
+        function setupRepo(id,page){
+        	var rcl = f.fetchMyRCL(id,page);
+        	$('#create-formRC').show();
+        	$('#create-formRF').hide();
+        	rcl 
+            	.done(function(rclistdata){
+            		rc_tot_list = rclistdata.meta.size;
+            		jq.rcldetail.append("<div class='top_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>");
+                	for (i = 0; i < rc_tot_list; i++) { 
+                		var no = i + 1;
+                		jq.rcldetail.append(
+    							"<div class='info_rcl'>"
+    							+ no 
+    							+ ". <b><a class='rfl_link' href='#"+rclistdata.rcl[i].id+"'>" 
+    							+ rclistdata.rcl[i].data.title +"</a></b>"
+    							+ "</a> by " 
+    							+ rclistdata.rcl[i].user[0].username
+    							+ "</br> content: "
+    							+ rclistdata.rcl[i].data.body
+    							+ "</br> tags: <i>"
+    							+ rclistdata.rcl[i].data.tags
+    							+ "</i></br> created: "
+    							+ rclistdata.rcl[i].data.date_created
+    							+ ", updated: "
+    							+ rclistdata.rcl[i].data.date_updated
+    							+ "</br> <a class='rcl_edit' href='#"+rclistdata.rcl[i].id+"'>edit</a> "
+    							+ "| <a class='rcl_delete' href='#"+rclistdata.rcl[i].id+"'>delete</a> "
+    							+ "</div></br>"
+    							);
+					}
+					//jq.rcldetail.append("<div class='bottom_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>"); 
+					
+            	})
+            }
+    
+        $(document.body).on('click', 'a.rfl_link', function(){
+  			rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);		
+  			var rfl = f.fetchMyRFL(rc_id);
         
-        rcl 
-            .always(function(){
-                //clearTimeout(initLoadMessageTimer);
-            })
-            
-            .done(function(rclistdata){
-            	
-                for (i = 0; i < rclistdata.meta.size; i++) { 
-                	var no = i + 1;
-                	$("#rcl-detail").append(
-    						"<div class='info_rcl'>"
-    						+ no 
-    						+ ". <a class='rfl_link' href='1'>"//repo-files/"+rclistdata.rcl[i].id+"'>" 
-    						+ rclistdata.rcl[i].data.title +"</a>"
-    						+ "</a> by " 
-    						+ rclistdata.rcl[i].user[0].username
-    						+ "</br> date created: "
-    						+ rclistdata.rcl[i].data.date_created
-    						//+ "</br><input type='submit' value='Edit'>"
-    						//+ "<input type='submit' value='Delete'>"
-    						+ "</br> <a href='"+rclistdata.rcl[i].id+"'>edit<a> "
-    						+ "| <a href='"+rclistdata.rcl[i].id+"'>delete<a> "
-    						+ "</div></br>"
+    		rfl 
+            	.done(function(rflistdata){
+                	$('#create-formRC').hide();
+                	$('#create-formRF').show();
+                	jq.rcldetail.text("");
+                	for (i = 0; i < rflistdata.meta.size; i++) { 
+                
+                		jq.rcldetail.append(
+    						i+1 
+    						+ ". <a href='"+rflistdata.rfl[i].data.file+"'>" 
+    						+ rflistdata.rfl[i].data.name 
+    						+ "<a> in " 
+    						+ rflistdata.rfl[i].data.container
+    						+ "</br> file address: "
+    						+ rflistdata.rfl[i].data.file
+    						+ "</br></br>"
     						);
-				} 
-				//f.deleteMyRC(rclistdata.rcl[i].id)"+f.gotoApp('repo-files',true)+"
+					} 
+					//jq.rfldetail.append(JSON.stringify(author));
 				
-            })
-        
-        $('div.info_rcl a').click(function(){
-            //e.preventDefault();
-            alert($(this).attr('href'));
-            //f.setTray("Loading...","indeterminate",false);
-            //var txt = $(e.target).text();
-  			//console.log(txt);
-  			//jq.rcldetail.append(txt);
-  			f.loadApp("repo-files");
+            	})
         });
         
-        $('.info_rcl a').click(function(){
-            //e.preventDefault();
-            alert($(this).attr('href'));
-            //f.setTray("Loading...","indeterminate",false);
-            //var txt = $(e.target).text();
-  			//console.log(txt);
-  			//jq.rcldetail.append(txt);
-  			f.loadApp("repo-files");
+        $(document.body).on('click', 'a.rcl_delete', function(){
+        	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
+        	var api_rcDelete = f.deleteMyRC(+rc_id);
+        	api_rcDelete
+                .done(function(){
+                    f.loadApp("repo");
+                })
         });
         
+        $(document.body).on('click', 'a.rcl_edit', function(){
+        	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
+        	var api_rcEdit = f.fetchMyRCL(rc_id,rc_page);
+        	api_rcEdit
+                .done(function(RCbasedID){
+                    //f.loadApp("repo");
+                    el.title.val(RCbasedID.rcl[0].data.title);
+        			el.body.val(RCbasedID.rcl[0].data.body);
+        			el.tags.val(RCbasedID.rcl[0].data.tags);
+        			el.service.val(RCbasedID.rcl[0].data.service);
+                })
+        });
         
-        $('.rfl_link').click(function(){
-    		alert($(this).attr('href'));
-    		// or alert($(this).hash();
-    		f.loadApp("repo-files");
-  		});
-
+        $(document.body).on('click', 'a.rc_previous', function(){
+        	rc_page = rc_page - 1;
+        	if (rc_page < 0){rc_page = "0"}
+        	jq.rcldetail.text("");
+        	setupRepo(rc_id,rc_page);
+        });
         
-        // Create form
-        $("#create-form").submit(function(e){
+        $(document.body).on('click', 'a.rc_next', function(){
+        	rc_page = rc_page + 1;
+        	var max_rc_page = Math.round(+rc_tot_list/2)-1;
+        	if (rc_page > max_rc_page){rc_page = max_rc_page}
+        	jq.rcldetail.text("");
+        	setupRepo(rc_id,rc_page);
+        });
+        
+        // Create form for Repo container
+        $("#create-formRC").submit(function(e){
             e.preventDefault();
             
             f.setTray("Loading...","indeterminate",false);
@@ -305,8 +420,8 @@
   				"rc": [
     				{
       				"data": {
-        				"user": "765ae9d3d56f48dc89621fb9628cdacc",
-        				"role": "711f64eda76e458a970c7ef7d6d87cad",
+        				"user": u.get("WHOAMI_XHR").responseJSON.user.id,
+        				"role": u.get("MYROLES_XHR").responseJSON.role[0].id,
         				"title": el.title.val(),
         				"body": el.body.val(),
         				"tags": el.tags.val(),
@@ -323,7 +438,8 @@
                 .done(function(){
                     //f.loadApp("repo");
                     f.closeTray();
-                    showMessage("Repository Container created successfully","pos");
+                    f.loadApp("repo");
+                    //showMessage("Repository Container created successfully","pos");
                     
                     
                 })
@@ -331,13 +447,55 @@
                     f.closeTray();
                     showMessage("Repository Container created failed.<br><br>Please try again.","neg");
                 });
-                
+            
+        });
+        
+        // Create form for Repo File
+        $("#create-formRF").submit(function(e){
+            e.preventDefault();
+            
+            f.setTray("Loading...","indeterminate",false);
+            
+            hideMessages();
+            
+            var api_data_createRF = {
+  				"rf": [
+    				{
+      				"data": {
+        				"name": el.name.val(),
+        				"file": el.file.val(),
+        				"container": rc_id
+      						},
+      				"nonce": "1"
+    				}
+  				]
+			}
+			
+						
+            jq.rcldetail.append(JSON.stringify(api_data_createRF)); 
+            f.closeTray();              
+            /*var api_rfCreate = f.fetchCreateMyRF(api_data_createRF);
+            
+            api_rfCreate
+                .done(function(){
+                    //f.loadApp("repo");
+                    f.closeTray();
+                    showMessage("File Repository created successfully","pos");
+                    
+                    
+                })
+                .fail(function(xhr){
+                    f.closeTray();
+                    showMessage("File Repository created failed.<br><br>Please try again.","neg");
+                });
+              */  
             
             
         });
 
-		
-        
+		//set initial repo environment
+        setupRepo(rc_id,rc_page);   
+                
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();
         

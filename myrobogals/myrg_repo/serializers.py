@@ -15,5 +15,6 @@ class RepoContainerSerializer(serializers.ModelSerializer):
 class RepoFileSerializer(serializers.ModelSerializer):
     class Meta:
         model = RepoFile
+        search_fields = ['repofile__container']
         read_only_fields = RepoFile.READONLY_FIELDS
         write_only_fields = RepoFile.PROTECTED_FIELDS

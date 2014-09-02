@@ -59,9 +59,9 @@ class ListRepoContainers(RobogalsAPIView):
         
         
         # Filter
-        filter_dict = {}
+        filter_dict = {} 
         sort_fields = []
-        fields = ["id"]
+        fields = ["id", "user", "role"] 
         
         for field_object in requested_fields:
             field_name = field_object.get("field")
@@ -117,13 +117,13 @@ class ListRepoContainers(RobogalsAPIView):
         serialized_query = serializer(query, many=True)
         
         # Output
-        output_list = []  
+        output_list = [] 
         
         for repocontainer_object in serialized_query.data:
             new_dict = {}
             new_dict.update({"id": repocontainer_object.pop("id")})
             new_dict.update({"data": repocontainer_object})
-            # retrieve username information(from user model) when 'user' attribut is defined on the request
+            # checked user property and retrieve information for user(from user model) 
             # http://stackoverflow.com/questions/11748234/
             if repocontainer_object.get('user'):
                 user_id = repocontainer_object.pop("user")
@@ -354,8 +354,8 @@ class CreateRepoContainers(RobogalsAPIView):
             if serialized_repocontainer.is_valid():
                 try:
                     with transaction.atomic():
-                        repocontainer = serialized_repocontainer.save()
-                        completed_repocontainer_creations.update({repocontainer_nonce: repocontainer.id})
+                         repocontainer = serialized_repocontainer.save()
+                         completed_repocontainer_creations.update({repocontainer_nonce: repocontainer.id})
                 except:
                     failed_repocontainer_creations.update({repocontainer_nonce: "OBJECT_NOT_MODIFIED"})
             else:
@@ -367,7 +367,8 @@ class CreateRepoContainers(RobogalsAPIView):
             },
             "success": {
                 "nonce_id": completed_repocontainer_creations
-            }
+            },
+            "msg": serialized_repocontainer  
         })
         
         
@@ -430,7 +431,9 @@ class ListRepoFiles(RobogalsAPIView):
             except FieldDoesNotExist:
                 return Response({"detail":"`{}` is not a valid field name.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
                 
-            if (field_query is not None):
+            if (field_query is not None and field_name == "container"):
+                filter_dict.update({field_name+"__id__icontains": str(field_query)})
+            elif (field_query is not None):
                 filter_dict.update({field_name+"__icontains": str(field_query)})
             
             if (field_order is not None):

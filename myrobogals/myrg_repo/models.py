@@ -31,14 +31,14 @@ class RepoContainer(models.Model):
     )
     service = models.PositiveSmallIntegerField(_('service'),
                                                choices=SERVICE_CHOICES,
-                                               default=0,
-                                               #blank=False
+                                               default=99,
+                                               blank=False
                                                )
     date_created = models.DateField(_('date created'),
-                                    #blank=False,
+                                    blank=False,
                                     default=timezone.now)
-    date_updated = models.DateField(_('date created'),
-                                    #blank=False,
+    date_updated = models.DateField(_('date updated'),
+                                    blank=False,
                                     default=timezone.now)
     
     # Fields that cannot be listed or filtered/sorted with
@@ -50,7 +50,8 @@ class RepoContainer(models.Model):
     # Fields that cannot be written to
     READONLY_FIELDS = ("id","date_created",)
     
-    
+    def __str__(self):
+        return self.title
 
 #@python_2_unicode_compatible
 class RepoFile(models.Model):
