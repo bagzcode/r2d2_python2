@@ -512,7 +512,8 @@ def upload(request):
         # Render list page with the documents and the form
         return render_to_response(
              'upload.html',
-             {'documents': documents, 'form': form, 'response': request.POST},
+             #{'response': request.POST},
+             {'documents': documents, 'form': form, 'response': request.FILES},
              context_instance=RequestContext(request))
         
 

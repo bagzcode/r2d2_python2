@@ -169,18 +169,6 @@
                     </div>
                 </div>
             </form>
-            
-            {% if documents %}
-			<ul>
-			{% for document in documents %}
-				<li><a href="{{ document.file.url }}">{{ document.file.name }}</a></li>
-			{% endfor %}
-			</ul>
-		{% else %}
-			<p>No documents.</p>
-		{% endif %}
-		
-		{{ response }}
 
             
         </div>
@@ -360,11 +348,10 @@
 					}
             	})
             }
-    
-        //event to open RF based on RC id 
-        $(document.body).on('click', 'a.rfl_link', function(){
-  			rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);		
-  			var rfl = f.fetchMyRFL(rc_id);
+        
+        //call listing function for repo file based on container_id
+    	function getListFile(rcid){
+    		var rfl = f.fetchMyRFL(rcid);
         
     		rfl 
             	.done(function(rflistdata){
@@ -387,6 +374,12 @@
 					//jq.rfldetail.append(JSON.stringify(author));
 				
             	})
+    	}
+        
+        //event to open RF based on RC id 
+        $(document.body).on('click', 'a.rfl_link', function(){
+  			rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);		
+  			getListFile(rc_id);
         });
         
         //event to trigger RC delete link
@@ -501,13 +494,50 @@
             
         });
         
+        // URL generators
+   		f.generateAPImultipart = function(endpoint, isInternal) {
+        	var url = endpoint.replace(/^\/|\/$/g, '');
+
+        	if (isInternal){
+            	return "/" + url;
+        	}
+        
+        	return s.get("API_ROOT_URL") + url + ".multipart";
+    	}
+        
+        // API and resource calls
+    	f.uploadFORM = function(endpoint, data, type, isInternal){
+        	var data = data || {};
+        	var type = type || "POST";
+        
+        	var data_obj = {
+                        contentType: 'multipart/form-data; boundary=BoUnDaRyStRiNg',
+                        type: type
+                       }
+                       
+        	if (!csrfSafeMethod(type)){
+            	data_obj.data = JSON.stringify(data);
+        	}
+        
+        	return $.ajax(f.generateAPImultipart(endpoint, isInternal), data_obj);
+    	}
+        
         // upload file to RepoFile based container_id
         $("#create-formRF").submit(function(e){
             el.container.val(rc_id);
-            $("#create-formRF").get(0).setAttribute('action', 'api/1.0/repofiles/create'); 
-            e.preventDefault();
-            //alert("name :"+el.name.val()+", file :"+el.file.val()+", container :"+el.container.val());
-            
+        	http://portfolio.planetjon.ca/2014/01/26/submit-file-input-via-ajax-jquery-easy-way/
+        	$.ajax({
+            	type: "POST",
+            	url: "api/1.0/repofiles/create",
+            	data: new FormData(this),//datastring,
+            	processData: false,
+      			contentType: false,
+            	success: function(data) {
+                 	//alert(data);
+            	}
+        	});
+        	e.preventDefault();
+        	getListFile(rc_id)
         });
 
 		//set initial repo environment
