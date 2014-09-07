@@ -3,6 +3,8 @@ from future.builtins import *
 import six
 
 from django.conf.urls import patterns, include, url
+from django.conf.urls.static import static
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth.models import Group
 from myrg_users.models import RobogalsUser
@@ -13,7 +15,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from myrg_core.views import Time
 from myrg_users.views import ListUsers, DeleteUsers, EditUsers, CreateUsers, ResetUserPasswords, ResetUserPasswordsComplete, WhoAmI, ListMyRoles, KillSessions
 from myrg_groups.views import ListGroups, DeleteGroups, EditGroups, CreateGroups, ListRoles, EditRoles, CreateRoles, ListRoleClasses, DeleteRoleClasses, EditRoleClasses, CreateRoleClasses
-from myrg_repo.views import ListRepoFiles, EditRepoFiles, CreateRepoFiles, ListRepoContainers, DeleteRepoContainers, EditRepoContainers, CreateRepoContainers
+from myrg_repo.views import ListRepoFiles, ListRepoContainers, DeleteRepoContainers, EditRepoContainers, CreateRepoContainers
 from myrg_messages.views import SendMessage
 
 # Auto generate/collate Django admin panels
@@ -60,8 +62,7 @@ api_urlpatterns = patterns('',
     url(r'^api/1.0/roleclasses/create$', CreateRoleClasses.as_view()),
     
     url(r'^api/1.0/repofiles/list$', ListRepoFiles.as_view()),
-    url(r'^api/1.0/repofiles/edit$', EditRepoFiles.as_view()),
-    url(r'^api/1.0/repofiles/create$', CreateRepoFiles.as_view()),
+    url(r'^api/1.0/repofiles/create', 'myrg_repo.views.upload', name='upload'),
 
     url(r'^api/1.0/repocontainers/list$', ListRepoContainers.as_view()),
     url(r'^api/1.0/repocontainers/delete$', DeleteRepoContainers.as_view()),
@@ -81,4 +82,4 @@ urlpatterns += patterns('',
     url(r'^app/set_role_id$', 'myrg_webapp.views.set_role_id'),
     url(r'^app/resource/(?P<resource_id>.+?)$', 'myrg_webapp.views.get_resource'),
     url(r'^$', 'myrg_webapp.views.webapp', name='home'),
-)
+)+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

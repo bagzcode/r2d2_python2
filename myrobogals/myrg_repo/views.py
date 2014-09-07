@@ -17,7 +17,13 @@ from django.utils import timezone
 
 from .models import RepoContainer, RepoFile
 from .serializers import RepoContainerSerializer, RepoFileSerializer
+from .forms import UploadFileForm
 
+from django.shortcuts import render_to_response
+from django.template import RequestContext
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 
 PAGINATION_MAX_LENGTH = 1000
 
@@ -209,7 +215,7 @@ class EditRepoContainers(RobogalsAPIView):
     def post(self, request, format=None):
         # request.DATA
         try:
-            supplied_repocontaineres = list(request.DATA.get("repo_container"))
+            supplied_repocontaineres = list(request.DATA.get("rc"))
         except:
             return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
                 
@@ -228,15 +234,15 @@ class EditRepoContainers(RobogalsAPIView):
             except:
                 return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
             
-            if (roleclass_id is None):
+            if (repocontainer_id is None):
                 return Response({"detail":"DATA_INSUFFICIENT"}, status=status.HTTP_400_BAD_REQUEST)
             
-            for field,value in six.iteritems(roleclass_data):
+            for field,value in six.iteritems(repocontainer_data):
                 field = str(field)
                 
                 # Read only fields
                 if field in RepoContainer.READONLY_FIELDS:
-                    failed_repocontainer_updates.update({roleclass_id: "FIELD_READ_ONLY"})
+                    failed_repocontainer_updates.update({repocontainer_id: "FIELD_READ_ONLY"})
                     skip_repocontainer = True
                     break
                 
@@ -245,7 +251,7 @@ class EditRepoContainers(RobogalsAPIView):
                 try:
                     RepoContainer._meta.get_field_by_name(field)
                 except FieldDoesNotExist:
-                    failed_repocontainer_updates.update({roleclass_id: "FIELD_IDENTIFIER_INVALID"})
+                    failed_repocontainer_updates.update({repocontainer_id: "FIELD_IDENTIFIER_INVALID"})
                     skip_repocontainer = True
                     break
                     
@@ -253,13 +259,13 @@ class EditRepoContainers(RobogalsAPIView):
                 # Permission restricted editing to be implemented here
                 #
                 # if not permission_allows_editing_of_this_id:
-                #   failed_roleclass_updates.update({pk: "PERMISSION_DENIED"})
+                #   failed_repocontainer_updates.update({pk: "PERMISSION_DENIED"})
                 #   skip_roleclass = True
                 #   break
                 ################################################################
             
                 # Add to update data dict
-                roleclass_update_dict.update({field: value})
+                repocontainer_update_dict.update({field: value})
             
             if skip_repocontainer:
                 continue
@@ -267,19 +273,19 @@ class EditRepoContainers(RobogalsAPIView):
             
             # Fetch, serialise and save
             try:
-                repocontainer_query = RepoContainer.objects.get(pk=roleclass_id)
+                repocontainer_query = RepoContainer.objects.get(pk=repocontainer_id)
             except:
                 failed_repocontainer_updates.update({repocontainer_id: "OBJECT_NOT_FOUND"})
                 continue
                 
             serializer = RepoContainerSerializer
-            serialized_group = serializer(repocontainer_query, data=repocontainer_update_dict, partial=True)
+            serialized_repocontainer = serializer(repocontainer_query, data=repocontainer_update_dict, partial=True)
         
             if serialized_repocontainer.is_valid():
                 try:
                     with transaction.atomic():
                         serialized_repocontainer.save()
-                        completed_repocontainer_updates.append(roleclass_id)
+                        completed_repocontainer_updates.append(repocontainer_id)
                 except:
                     failed_repocontainer_updates.update({repocontainer_id: "OBJECT_NOT_MODIFIED"})
             else:
@@ -368,7 +374,7 @@ class CreateRepoContainers(RobogalsAPIView):
             "success": {
                 "nonce_id": completed_repocontainer_creations
             },
-            "msg": serialized_repocontainer  
+            "msg": serialized_repocontainer.is_valid()  
         })
         
         
@@ -483,174 +489,77 @@ class ListRepoFiles(RobogalsAPIView):
                             "rfl": output_list
                         })
 
-class EditRepoFiles(RobogalsAPIView):
-    def post(self, request, format=None):
-        # request.DATA
-        try:
-            supplied_repofiles = list(request.DATA.get("rf"))
-        except:
-            return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
-                
-        failed_repofile_updates = {}
-        completed_repofile_updates = []
         
-        # Filter out bad data
-        for repofile_object in supplied_repofiles:
-            skip_repofile = False
-            repofile_update_dict = {}
-            
-            
-            try:
-                repofile_id = int(repofile_object.get("id"))
-                repofile_data = dict(repofile_object.get("data"))
-            except:
-                return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if (role_id is None):
-                return Response({"detail":"DATA_INSUFFICIENT"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            for field,value in six.iteritems(repofile_data):
-                field = str(field)
-                
-                # Read only fields
-                if field in RepoFile.READONLY_FIELDS:
-                    failed_repofile_updates.update({repofile_id: "FIELD_READ_ONLY"})
-                    skip_repofile = True
-                    break
-                
-                # Non-valid field names
-                # ! Uses _meta non-documented API
-                try:
-                    RepoFile._meta.get_field_by_name(field)
-                except FieldDoesNotExist:
-                    failed_repofile_updates.update({repofile_id: "FIELD_IDENTIFIER_INVALID"})
-                    skip_repofile = True
-                    break
-                     
-                ################################################################
-                # Permission restricted editing to be implemented here
-                #
-                # if not permission_allows_editing_of_this_id:
-                #   failed_role_updates.update({pk: "PERMISSION_DENIED"})
-                #   skip_role = True
-                #   break
-                ################################################################
-            
-                # Add to update data dict
-                repofile_update_dict.update({field: value})
-            
-            if skip_repofile:
-                continue
-            
-            
-            # Fetch, serialise and save
-            try:
-                repofile_query = RepoFile.objects.get(pk=role_id)
-            except:
-                failed_repofile_updates.update({repofile_id: "OBJECT_NOT_FOUND"})
-                continue
-                
-            serializer = RepoFileSerializer
-            serialized_repofile = serializer(repofile_query, data=repofile_update_dict, partial=True)
-        
-            if serialized_repofile.is_valid():
-                try: 
-                    with transaction.atomic():
-                        serialized_repofile.save()
-                        completed_repofile_updates.append(repofile_id)
-                except:
-                    failed_repofile_updates.update({repofile_id: "OBJECT_NOT_MODIFIED"})
-            else:
-                failed_repofile_updates.update({repofile_id: "DATA_VALIDATION_FAILED"})
-                
-        return Response({
-            "fail": {
-                "id": failed_repofile_updates
-            },
-            "success": {
-                "id": completed_repofile_updates
-            }
-        })
+def upload(request):
+        # Handle file upload
+        if request.method == 'POST':
+            form = UploadFileForm(request.POST, request.FILES)
+            repocontainer=RepoContainer.objects.get(id=request.POST['container'])
+            if form.is_valid():
+                uploadfile = RepoFile.objects.create(name = request.POST['name'], 
+                                                 file = request.FILES['file'], 
+                                                 container = repocontainer
+                                                 )
+                uploadfile.save()
+            #return HttpResponse(status=200)
+        else:
+            form = UploadFileForm() # A empty, unbound form
+            #return HttpResponse(status=500)
 
-class CreateRepoFiles(RobogalsAPIView):
-    #parser_classes = (FileUploadParser,)
-    def post(self, request, format=None):
-        # request.DATA
-        try:
-            supplied_repofiles = list(request.DATA.get("rf"))
-        except:
-            return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
-                
-        failed_repofile_creations = {}
-        completed_repofile_creations = {}
-        
-        # Filter out bad data
-        for repofile_object in supplied_repofiles:
-            skip_repofile = False
-            repofile_create_dict = {}
-            
-            try:
-                repofile_nonce = repofile_object.get("nonce")
-                repofile_data = dict(repofile_object.get("data"))
-            except:
-                return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            if (repofile_nonce is None):
-                return Response({"detail":"DATA_INSUFFICIENT"}, status=status.HTTP_400_BAD_REQUEST)
-            
-            for field,value in six.iteritems(repofile_data):
-                field = str(field)
-                
-                # Read only fields
-                if field in RepoFile.READONLY_FIELDS:
-                    failed_repofile_creations.update({repofile_nonce: "FIELD_READ_ONLY"})
-                    skip_repofile = True
-                    break
-                
-                # Non-valid field names
-                # ! Uses _meta non-documented API
-                try:
-                    RepoFile._meta.get_field_by_name(field)
-                except FieldDoesNotExist:
-                    failed_repofile_creations.update({repofile_nonce: "FIELD_IDENTIFIER_INVALID"})
-                    skip_repofile = True
-                    break
-              
-            
-                # Add to update data dict
-                repofile_create_dict.update({field: value})
-            
-            if skip_repofile:
-                continue 
-               
-            
-            # Serialise and save
-            serializer = RepoFileSerializer
-            serialized_repofile = serializer(data=repofile_create_dict, files=request.FILES)
-            
-            if serialized_repofile.is_valid():
-                try:
-                    with transaction.atomic():
-                        repofile = serialized_repofile.save()
-                        completed_repofile_creations.update({repofile_nonce: role.id})
-                except:
-                    failed_repofile_creations.update({repofile_nonce: "OBJECT_NOT_MODIFIED"})
-            else:
-                failed_repofile_creations.update({repofile_nonce: "DATA_VALIDATION_FAILED"})
-                
-        return Response({
-            "fail": {
-                "nonce": failed_repofile_creations
-            },
-            "success": {
-                "nonce_id": completed_repofile_creations
-            },
-            "error": {
-                "message": serialized_repofile.errors
-            },
-        })
+        # Load documents for the list page
+        documents = RepoFile.objects.all()
 
+        # Render list page with the documents and the form
+        return render_to_response(
+             'upload.html',
+             {'documents': documents, 'form': form, 'response': request.POST},
+             context_instance=RequestContext(request))
         
-        
-        
-        
+
+
+#http://pastebin.com/wNZYujeP
+#import base64, imghdr, uuid
+
+#from django.core.files.base import ContentFile
+#from django.utils.translation import ugettext_lazy as _
+#from rest_framework import serializers
+
+#DEFAULT_CONTENT_TYPE = "application/octet-stream"
+#ALLOWED_IMAGE_TYPES = (
+#    "jpeg",
+#    "jpg",
+#    "png"
+#    )
+
+#class Base64ImageField(serializers.ImageField):
+#    """
+#    A django-rest-framework field for handling image-uploads through raw post data.
+#    It uses base64 for en-/decoding the contents of the file.
+#    """
+
+#    def from_native(self, base64_data):
+        # Check if this is a base64 string
+#        if isinstance(base64_data, basestring):
+            # Try to decode the file. Return validation error if it fails.
+#            try:
+#                decoded_file = base64.b64decode(base64_data)
+#            except TypeError:
+#                raise serializers.ValidationError(_("Please upload a valid image."))
+
+            # Generate file name:
+#            file_name = str(uuid.uuid4())[:12] # 12 character is more than enough.
+            # Get the file name extension:
+#            file_extension = self.get_file_extension(file_name, decoded_file)
+#            if file_extension not in ALLOWED_IMAGE_TYPES:
+#                raise serializers.ValidationError(_("The type of the image couldn't been determined."))
+
+#            complete_file_name = file_name + "." + file_extension
+
+#            data = ContentFile(decoded_file, name=complete_file_name)
+
+#        return super(Base64ImageField, self).from_native(data)
+
+#    def get_file_extension(self, filename, decoded_file):
+#        extension = imghdr.what(filename, decoded_file)
+#        extension = "jpg" if extension == "jpeg" else extension
+#        return extension

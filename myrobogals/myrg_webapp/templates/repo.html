@@ -139,18 +139,20 @@
                 </div>
                 <div class="row">
                     <div class="right col">
-                        <input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
+                        <input id="rc_create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
                     </div>
                 </div>
             </form>
             
-            <form id="create-formRF" method="post" >
+            <form id="create-formRF" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
                 <div class="row">
                     <div class="left col">
                         <label for="id_name">Name</label>
                     </div>
                     <div class="col">
                         <input id="id_name" type="text" name="name" placeholder="Name">
+                        <input id="id_container" type="hidden" name="container" value="1">
                     </div>
                 </div>
                 <div class="row">
@@ -167,6 +169,19 @@
                     </div>
                 </div>
             </form>
+            
+            {% if documents %}
+			<ul>
+			{% for document in documents %}
+				<li><a href="{{ document.file.url }}">{{ document.file.name }}</a></li>
+			{% endfor %}
+			</ul>
+		{% else %}
+			<p>No documents.</p>
+		{% endif %}
+		
+		{{ response }}
+
             
         </div>
     </div>
@@ -190,12 +205,14 @@
         
         //Set global variable for RC and RF
         var rc_id = "";
+        var rc_length = "2";
         var rc_page = "0";
         var rc_tot_list = "";
        
         
         // Grab jQuery objects from DOM elements
         jq.rcldetail = $("#rcl-detail");
+        jq.rcbutton = $("#rc_create");
         
         var curr_state = f.fetchStateData();
         
@@ -217,7 +234,7 @@
         //RF Form
         el.name = $("#id_name");
         el.file = $("#id_file");
-        //el.container = $("#id_container");
+        el.container = $("#id_container");
 
         
         function hideMessages() {
@@ -230,11 +247,11 @@
         }
         
         //API
-        f.fetchMyRCL = function(rc_id, rc_page){
+        f.fetchMyRCL = function(rc_id,rc_length,rc_page){
         	var api_data_rcl = {
                     	"pagination": 
                     		{
-    							"length": 2,
+    							"length": rc_length,
     							"page": rc_page
   							},
   						"query": 
@@ -270,6 +287,10 @@
             return f.fetchAPI("/api/1.0/repocontainers/create",api_data,"POST",true);
     	}
     	
+    	f.fetchUpdateMyRC = function(api_data){
+            return f.fetchAPI("/api/1.0/repocontainers/edit",api_data,"POST",true);
+    	}
+    	
     	f.deleteMyRC = function(api_data){
     		var del_api_data = {
                     	"id": [ 
@@ -302,23 +323,21 @@
                 		}
             return f.fetchAPI("/api/1.0/repofiles/list",api_data_rfl,"POST",true);
     	}
-    	
-    	f.fetchCreateMyRF = function(api_data){
-            return f.fetchAPI("/api/1.0/repofiles/create",api_data,"POST",true);
-    	}
-    	
     
         //call listing function and show them on the interface
-        function setupRepo(id,page){
-        	var rcl = f.fetchMyRCL(id,page);
+        function setupRepo(rcid,rclength,rcpage){
+        	var rcl = f.fetchMyRCL(rcid,rclength,rcpage);
         	$('#create-formRC').show();
         	$('#create-formRF').hide();
         	rcl 
             	.done(function(rclistdata){
             		rc_tot_list = rclistdata.meta.size;
+            		rc_length = rclength;
+                    rc_page = rcpage;
+                    jq.rcldetail.text("");
             		jq.rcldetail.append("<div class='top_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>");
                 	for (i = 0; i < rc_tot_list; i++) { 
-                		var no = i + 1;
+                		var no = (rc_page*rc_length) + i + 1;
                 		jq.rcldetail.append(
     							"<div class='info_rcl'>"
     							+ no 
@@ -339,11 +358,10 @@
     							+ "</div></br>"
     							);
 					}
-					//jq.rcldetail.append("<div class='bottom_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>"); 
-					
             	})
             }
     
+        //event to open RF based on RC id 
         $(document.body).on('click', 'a.rfl_link', function(){
   			rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);		
   			var rfl = f.fetchMyRFL(rc_id);
@@ -357,7 +375,7 @@
                 
                 		jq.rcldetail.append(
     						i+1 
-    						+ ". <a href='"+rflistdata.rfl[i].data.file+"'>" 
+    						+ ". <a href='media/"+rflistdata.rfl[i].data.file+"'>" 
     						+ rflistdata.rfl[i].data.name 
     						+ "<a> in " 
     						+ rflistdata.rfl[i].data.container
@@ -371,6 +389,7 @@
             	})
         });
         
+        //event to trigger RC delete link
         $(document.body).on('click', 'a.rcl_delete', function(){
         	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
         	var api_rcDelete = f.deleteMyRC(+rc_id);
@@ -380,9 +399,11 @@
                 })
         });
         
+        //event to trigger RC edit link
         $(document.body).on('click', 'a.rcl_edit', function(){
         	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
-        	var api_rcEdit = f.fetchMyRCL(rc_id,rc_page);
+        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
+        	var api_rcEdit = f.fetchMyRCL(rc_id,rc_length, "0");
         	api_rcEdit
                 .done(function(RCbasedID){
                     //f.loadApp("repo");
@@ -390,49 +411,79 @@
         			el.body.val(RCbasedID.rcl[0].data.body);
         			el.tags.val(RCbasedID.rcl[0].data.tags);
         			el.service.val(RCbasedID.rcl[0].data.service);
+        			jq.rcbutton.val("Update");
                 })
         });
         
+        //Navigation page RC
         $(document.body).on('click', 'a.rc_previous', function(){
+        	rc_id = "";
         	rc_page = rc_page - 1;
         	if (rc_page < 0){rc_page = "0"}
         	jq.rcldetail.text("");
-        	setupRepo(rc_id,rc_page);
+        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
+        	setupRepo(rc_id,rc_length,rc_page);
         });
         
         $(document.body).on('click', 'a.rc_next', function(){
-        	rc_page = rc_page + 1;
+        	rc_id = "";
+        	rc_page = +rc_page + 1;
         	var max_rc_page = Math.round(+rc_tot_list/2)-1;
         	if (rc_page > max_rc_page){rc_page = max_rc_page}
         	jq.rcldetail.text("");
-        	setupRepo(rc_id,rc_page);
+        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
+        	setupRepo(rc_id,rc_length,rc_page);
         });
         
         // Create form for Repo container
         $("#create-formRC").submit(function(e){
             e.preventDefault();
             
-            f.setTray("Loading...","indeterminate",false);
+            //f.setTray("Loading...","indeterminate",false);
             
             hideMessages();
             
-            var api_data_createRC = {
-  				"rc": [
-    				{
-      				"data": {
-        				"user": u.get("WHOAMI_XHR").responseJSON.user.id,
-        				"role": u.get("MYROLES_XHR").responseJSON.role[0].id,
-        				"title": el.title.val(),
-        				"body": el.body.val(),
-        				"tags": el.tags.val(),
-        				"service": el.service.find(":selected").attr('value')
+            
+            
+            if (jq.rcbutton.val() == "Create"){ 
+            	var api_data_createRC = {
+  					"rc": [
+    					{
+      					"data": {
+        					"user": u.get("WHOAMI_XHR").responseJSON.user.id,
+        					"role": u.get("MYROLES_XHR").responseJSON.role[0].id,
+        					"title": el.title.val(),
+        					"body": el.body.val(),
+        					"tags": el.tags.val(),
+        					"service": el.service.find(":selected").attr('value')
       						},
-      				"nonce": "1"
-    				}
-  				]
-			}			
-            //jq.rcldetail.append(JSON.stringify(api_data_createRC));               
-            var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
+      					"nonce": "1"
+    					}
+  					]
+				}			
+            	//alert(JSON.stringify(api_data_createRC));               
+            	var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
+            } else {
+            
+            	var api_data_createRC = {
+  					"rc": [
+    					{
+      					"data": {
+        					"user": u.get("WHOAMI_XHR").responseJSON.user.id,
+        					"role": u.get("MYROLES_XHR").responseJSON.role[0].id,
+        					"title": el.title.val(),
+        					"body": el.body.val(),
+        					"tags": el.tags.val(),
+        					"service": el.service.find(":selected").attr('value')
+      						},
+      					"id": rc_id
+    					}
+  					]
+				}
+				//alert(JSON.stringify(api_data_createRC));
+				var api_rcCreate = f.fetchUpdateMyRC(api_data_createRC);
+			}
+            //jq.rcldetail.append(JSON.stringify(api_data_createRC));
             
             api_rcCreate
                 .done(function(){
@@ -450,51 +501,17 @@
             
         });
         
-        // Create form for Repo File
+        // upload file to RepoFile based container_id
         $("#create-formRF").submit(function(e){
+            el.container.val(rc_id);
+            $("#create-formRF").get(0).setAttribute('action', 'api/1.0/repofiles/create'); 
             e.preventDefault();
-            
-            f.setTray("Loading...","indeterminate",false);
-            
-            hideMessages();
-            
-            var api_data_createRF = {
-  				"rf": [
-    				{
-      				"data": {
-        				"name": el.name.val(),
-        				"file": el.file.val(),
-        				"container": rc_id
-      						},
-      				"nonce": "1"
-    				}
-  				]
-			}
-			
-						
-            jq.rcldetail.append(JSON.stringify(api_data_createRF)); 
-            f.closeTray();              
-            /*var api_rfCreate = f.fetchCreateMyRF(api_data_createRF);
-            
-            api_rfCreate
-                .done(function(){
-                    //f.loadApp("repo");
-                    f.closeTray();
-                    showMessage("File Repository created successfully","pos");
-                    
-                    
-                })
-                .fail(function(xhr){
-                    f.closeTray();
-                    showMessage("File Repository created failed.<br><br>Please try again.","neg");
-                });
-              */  
-            
+            //alert("name :"+el.name.val()+", file :"+el.file.val()+", container :"+el.container.val());
             
         });
 
 		//set initial repo environment
-        setupRepo(rc_id,rc_page);   
+        setupRepo(rc_id,rc_length,rc_page);   
                 
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();

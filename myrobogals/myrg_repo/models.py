@@ -59,8 +59,9 @@ class RepoFile(models.Model):
                             max_length=63,
                             blank=False)
     file = models.FileField(_('file'),
-                            upload_to='repo-files',# not sure where is the upload destination for the file
-                            blank=False)
+                            upload_to='repo-files',
+                            blank=False
+                            )
     container = models.ForeignKey(RepoContainer)
     
     # Fields that cannot be listed or filtered/sorted with
