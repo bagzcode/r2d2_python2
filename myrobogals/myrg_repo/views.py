@@ -168,7 +168,7 @@ class DeleteRepoContainers(RobogalsAPIView):
         affected_ids = []
         
         for idx,pk in enumerate(requested_ids):
-            if not isinstance(pk, int):
+            if not isinstance(pk, six.string_types):
                 ids_to_remove.append(idx)
                 failed_ids.update({pk: "DATA_FORMAT_INVALID"})
                 continue
@@ -229,7 +229,7 @@ class EditRepoContainers(RobogalsAPIView):
             
             
             try:
-                repocontainer_id = int(repocontainer_object.get("id"))
+                repocontainer_id = smart_text(repocontainer_object.get("id"))
                 repocontainer_data = dict(repocontainer_object.get("data"))
             except:
                 return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
@@ -297,6 +297,9 @@ class EditRepoContainers(RobogalsAPIView):
             },
             "success": {
                 "id": completed_repocontainer_updates
+            },
+            "error": {
+                "msg":serialized_repocontainer.errors
             }
         })
 
@@ -489,6 +492,66 @@ class ListRepoFiles(RobogalsAPIView):
                             "rfl": output_list
                         })
 
+class DeleteRepoFiles(RobogalsAPIView):
+    def post(self, request, format=None):
+        # request.DATA
+        try:
+            requested_ids = list(set(request.DATA.get("id")))
+        except:
+            return Response({"detail":"DATA_FORMAT_INVALID"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if (not requested_ids):
+            return Response({"detail":"DATA_INSUFFICIENT"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        
+        # Filter out bad IDs 
+        ids_to_remove = []
+        failed_ids = {}
+        affected_ids = []
+        
+        for idx,pk in enumerate(requested_ids):
+            if not isinstance(pk, int):
+                ids_to_remove.append(idx)
+                failed_ids.update({pk: "DATA_FORMAT_INVALID"})
+                continue
+                    
+            ####################################################################
+            # Permission restricted deletion to be implemented here
+            #
+            # if not permission_allows_deletion_of_this_id:
+            #   ids_to_remove.append(idx)
+            #   failed_ids.update({pk: "PERMISSION_DENIED"})
+            ####################################################################
+        
+        # Remove bad IDs
+        requested_ids = [pk for idx,pk in enumerate(requested_ids) if idx not in ids_to_remove]
+        
+        # Run query
+        try:
+            with transaction.atomic():
+                query = RepoFile.objects.filter(id__in=requested_ids)
+                affected_ids = [obj.get("id") for obj in query.values("id")]
+                affected_num_rows = query.delete()
+        except:
+            for pk in requested_ids:
+                failed_ids.update({pk: "OBJECT_NOT_MODIFIED"})
+
+        # Gather up non-deleted IDs
+        non_deleted_ids = list(set(requested_ids)-set(affected_ids))
+        
+        for pk in non_deleted_ids:
+            failed_ids.update({pk: "OBJECT_NOT_MODIFIED"})
+        
+        
+        
+        return Response({
+            "fail": {
+                "id": failed_ids,
+            },
+            "success": {
+                "id": affected_ids
+            }
+        })
         
 def upload(request):
         # Handle file upload
@@ -501,66 +564,26 @@ def upload(request):
                                                  container = repocontainer
                                                  )
                 uploadfile.save()
-            #return HttpResponse(status=200)
+            return HttpResponse(status=200)
         else:
             form = UploadFileForm() # A empty, unbound form
-            #return HttpResponse(status=500)
+            return HttpResponse(status=500)
 
-        # Load documents for the list page
-        documents = RepoFile.objects.all()
+        # Load uploadfiles for the list page
+        #uploadfiles = RepoFile.objects.all()
 
-        # Render list page with the documents and the form
-        return render_to_response(
-             'upload.html',
+        # Render list page with the uploadfiles and the form --> page for testing purpose
+        #return render_to_response(
+             #'upload.html',
              #{'response': request.POST},
-             {'documents': documents, 'form': form, 'response': request.FILES},
-             context_instance=RequestContext(request))
+             #{'documents': uploadfiles, 'form': form, 'response': request.FILES},
+             #context_instance=RequestContext(request))
         
+# Receive the pre_delete signal and delete the file associated with the model instance.
+from django.db.models.signals import post_delete
+from django.dispatch.dispatcher import receiver
 
-
-#http://pastebin.com/wNZYujeP
-#import base64, imghdr, uuid
-
-#from django.core.files.base import ContentFile
-#from django.utils.translation import ugettext_lazy as _
-#from rest_framework import serializers
-
-#DEFAULT_CONTENT_TYPE = "application/octet-stream"
-#ALLOWED_IMAGE_TYPES = (
-#    "jpeg",
-#    "jpg",
-#    "png"
-#    )
-
-#class Base64ImageField(serializers.ImageField):
-#    """
-#    A django-rest-framework field for handling image-uploads through raw post data.
-#    It uses base64 for en-/decoding the contents of the file.
-#    """
-
-#    def from_native(self, base64_data):
-        # Check if this is a base64 string
-#        if isinstance(base64_data, basestring):
-            # Try to decode the file. Return validation error if it fails.
-#            try:
-#                decoded_file = base64.b64decode(base64_data)
-#            except TypeError:
-#                raise serializers.ValidationError(_("Please upload a valid image."))
-
-            # Generate file name:
-#            file_name = str(uuid.uuid4())[:12] # 12 character is more than enough.
-            # Get the file name extension:
-#            file_extension = self.get_file_extension(file_name, decoded_file)
-#            if file_extension not in ALLOWED_IMAGE_TYPES:
-#                raise serializers.ValidationError(_("The type of the image couldn't been determined."))
-
-#            complete_file_name = file_name + "." + file_extension
-
-#            data = ContentFile(decoded_file, name=complete_file_name)
-
-#        return super(Base64ImageField, self).from_native(data)
-
-#    def get_file_extension(self, filename, decoded_file):
-#        extension = imghdr.what(filename, decoded_file)
-#        extension = "jpg" if extension == "jpeg" else extension
-#        return extension
+@receiver(post_delete, sender=RepoFile)
+def repofile_delete(sender, instance, **kwargs):
+    # Pass false so FileField doesn't save the model.
+    instance.file.delete(False)

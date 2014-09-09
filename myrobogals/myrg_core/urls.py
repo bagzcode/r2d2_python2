@@ -15,7 +15,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 from myrg_core.views import Time
 from myrg_users.views import ListUsers, DeleteUsers, EditUsers, CreateUsers, ResetUserPasswords, ResetUserPasswordsComplete, WhoAmI, ListMyRoles, KillSessions
 from myrg_groups.views import ListGroups, DeleteGroups, EditGroups, CreateGroups, ListRoles, EditRoles, CreateRoles, ListRoleClasses, DeleteRoleClasses, EditRoleClasses, CreateRoleClasses
-from myrg_repo.views import ListRepoFiles, ListRepoContainers, DeleteRepoContainers, EditRepoContainers, CreateRepoContainers
+from myrg_repo.views import ListRepoFiles, DeleteRepoFiles, ListRepoContainers, DeleteRepoContainers, EditRepoContainers, CreateRepoContainers
 from myrg_messages.views import SendMessage
 
 # Auto generate/collate Django admin panels
@@ -62,6 +62,7 @@ api_urlpatterns = patterns('',
     url(r'^api/1.0/roleclasses/create$', CreateRoleClasses.as_view()),
     
     url(r'^api/1.0/repofiles/list$', ListRepoFiles.as_view()),
+    url(r'^api/1.0/repofiles/delete$', DeleteRepoFiles.as_view()),
     url(r'^api/1.0/repofiles/create', 'myrg_repo.views.upload', name='upload'),
 
     url(r'^api/1.0/repocontainers/list$', ListRepoContainers.as_view()),

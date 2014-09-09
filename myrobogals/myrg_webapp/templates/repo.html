@@ -57,6 +57,7 @@
     
     #app-container select,
     #app-container input,
+    #app-container textarea,
     #app-container button {
         border: 0;
         background: #fff;
@@ -113,7 +114,7 @@
                         <label for="id_body">Body</label>
                     </div>
                     <div class="col">
-                        <input id="id_body" type="text" name="body" placeholder="Body">
+                        <textarea id="id_body" type="text" name="body" placeholder="Body"></textarea>
                     </div>
                 </div>
                 <div class="row">
@@ -196,6 +197,9 @@
         var rc_length = "2";
         var rc_page = "0";
         var rc_tot_list = "";
+        var rc_title = "";
+        var rc_data = "";
+        var rf_id = "";
        
         
         // Grab jQuery objects from DOM elements
@@ -285,6 +289,7 @@
                     			api_data
   							]
                 		}
+                		//alert(JSON.stringify(del_api_data));
             return f.fetchAPI("/api/1.0/repocontainers/delete",del_api_data,"POST",true);
     	}
     	
@@ -311,6 +316,16 @@
                 		}
             return f.fetchAPI("/api/1.0/repofiles/list",api_data_rfl,"POST",true);
     	}
+    	
+    	f.deleteMyRF = function(api_data){
+    		var del_api_data = {
+                    	"id": [ 
+                    			api_data
+  							]
+                		}
+                		//alert(JSON.stringify(del_api_data));
+            return f.fetchAPI("/api/1.0/repofiles/delete",del_api_data,"POST",true);
+    	}
     
         //call listing function and show them on the interface
         function setupRepo(rcid,rclength,rcpage){
@@ -329,7 +344,7 @@
                 		jq.rcldetail.append(
     							"<div class='info_rcl'>"
     							+ no 
-    							+ ". <b><a class='rfl_link' href='#"+rclistdata.rcl[i].id+"'>" 
+    							+ ". <b><a class='rfl_link' href='#"+rclistdata.rcl[i].id+"_"+rclistdata.rcl[i].data.title+"'>" 
     							+ rclistdata.rcl[i].data.title +"</a></b>"
     							+ "</a> by " 
     							+ rclistdata.rcl[i].user[0].username
@@ -350,7 +365,7 @@
             }
         
         //call listing function for repo file based on container_id
-    	function getListFile(rcid){
+    	function getListFile(rcid, rcname){
     		var rfl = f.fetchMyRFL(rcid);
         
     		rfl 
@@ -364,10 +379,11 @@
     						i+1 
     						+ ". <a href='media/"+rflistdata.rfl[i].data.file+"'>" 
     						+ rflistdata.rfl[i].data.name 
-    						+ "<a> in " 
-    						+ rflistdata.rfl[i].data.container
-    						+ "</br> file address: "
+    						+ "<a> in <b>" 
+    						+ rcname
+    						+ "</b> </br> file address: "
     						+ rflistdata.rfl[i].data.file
+    						+ "</br><a class='rcf_delete' href='#"+rflistdata.rfl[i].id+"'>delete</a>"
     						+ "</br></br>"
     						);
 					} 
@@ -378,14 +394,18 @@
         
         //event to open RF based on RC id 
         $(document.body).on('click', 'a.rfl_link', function(){
-  			rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);		
-  			getListFile(rc_id);
+  			rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
+  			rc_id = rc_data[0];
+  			//alert(rc_id);	
+  			rc_title = rc_data[1];
+  			getListFile(rc_id, rc_title);
         });
         
         //event to trigger RC delete link
         $(document.body).on('click', 'a.rcl_delete', function(){
-        	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
-        	var api_rcDelete = f.deleteMyRC(+rc_id);
+        	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
+  			rc_id = rc_data[0];
+        	var api_rcDelete = f.deleteMyRC(rc_id);
         	api_rcDelete
                 .done(function(){
                     f.loadApp("repo");
@@ -394,7 +414,8 @@
         
         //event to trigger RC edit link
         $(document.body).on('click', 'a.rcl_edit', function(){
-        	rc_id = $(this).attr('href').slice(1, $(this).attr('href').length);
+        	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
+  			rc_id = rc_data[0];
         	//alert(rc_id+" | "+rc_length+" | "+rc_page);
         	var api_rcEdit = f.fetchMyRCL(rc_id,rc_length, "0");
         	api_rcEdit
@@ -494,42 +515,26 @@
             
         });
         
-        // URL generators
-   		f.generateAPImultipart = function(endpoint, isInternal) {
-        	var url = endpoint.replace(/^\/|\/$/g, '');
-
-        	if (isInternal){
-            	return "/" + url;
-        	}
-        
-        	return s.get("API_ROOT_URL") + url + ".multipart";
-    	}
-        
-        // API and resource calls
-    	f.uploadFORM = function(endpoint, data, type, isInternal){
-        	var data = data || {};
-        	var type = type || "POST";
-        
-        	var data_obj = {
-                        contentType: 'multipart/form-data; boundary=BoUnDaRyStRiNg',
-                        type: type
-                       }
-                       
-        	if (!csrfSafeMethod(type)){
-            	data_obj.data = JSON.stringify(data);
-        	}
-        
-        	return $.ajax(f.generateAPImultipart(endpoint, isInternal), data_obj);
-    	}
+        // Repo-File Views
+        //event to trigger RF delete link
+        $(document.body).on('click', 'a.rcf_delete', function(){
+        	rf_id = $(this).attr('href').slice(1, $(this).attr('href').length);	
+        	var api_rfDelete = f.deleteMyRF(+rf_id);
+        	api_rfDelete
+                .done(function(){
+                    getListFile(rc_id, rc_title);
+                })
+        });
         
         // upload file to RepoFile based container_id
         $("#create-formRF").submit(function(e){
+        	f.setTray("Uploading...","indeterminate",false);
             el.container.val(rc_id);
         	http://portfolio.planetjon.ca/2014/01/26/submit-file-input-via-ajax-jquery-easy-way/
         	$.ajax({
             	type: "POST",
             	url: "api/1.0/repofiles/create",
-            	data: new FormData(this),//datastring,
+            	data: new FormData(this),
             	processData: false,
       			contentType: false,
             	success: function(data) {
@@ -537,7 +542,16 @@
             	}
         	});
         	e.preventDefault();
-        	getListFile(rc_id)
+        	setTimeout(function(){
+        		//alert(rc_id+" | "+ rc_title);
+        		f.closeTray();
+        		getListFile(rc_id, rc_title);
+        		el.name.val("");
+        		el.file.val("");
+        	}, 1000);
+        	
+        	
+        	
         });
 
 		//set initial repo environment

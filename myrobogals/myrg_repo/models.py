@@ -12,6 +12,13 @@ from myrg_groups.models import Role
 
 #@python_2_unicode_compatible
 class RepoContainer(models.Model):
+    def uuid_generator():
+        from uuid import uuid4
+        return str(uuid4().hex)
+    
+    id = models.CharField(max_length=32, 
+                          primary_key=True, 
+                          default=uuid_generator)
     user = models.ForeignKey(RobogalsUser)
     role = models.ForeignKey(Role)
     title = models.CharField(_('title'),
