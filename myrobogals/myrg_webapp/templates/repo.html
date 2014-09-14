@@ -200,7 +200,8 @@
         var rc_title = "";
         var rc_data = "";
         var rf_id = "";
-       
+        var statusRC = "created";
+        var RCusername = "";
         
         // Grab jQuery objects from DOM elements
         jq.rcldetail = $("#rcl-detail");
@@ -339,7 +340,7 @@
                     rc_page = rcpage;
                     jq.rcldetail.text("");
             		jq.rcldetail.append("<div class='top_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>");
-                	for (i = 0; i < rc_tot_list; i++) { 
+                	for (i = 0; i < rc_length; i++) { 
                 		var no = (rc_page*rc_length) + i + 1;
                 		jq.rcldetail.append(
     							"<div class='info_rcl'>"
@@ -355,11 +356,18 @@
     							+ "</i></br> created: "
     							+ rclistdata.rcl[i].data.date_created
     							+ ", updated: "
-    							+ rclistdata.rcl[i].data.date_updated
-    							+ "</br> <a class='rcl_edit' href='#"+rclistdata.rcl[i].id+"'>edit</a> "
-    							+ "| <a class='rcl_delete' href='#"+rclistdata.rcl[i].id+"'>delete</a> "
-    							+ "</div></br>"
-    							);
+    							+ rclistdata.rcl[i].data.date_updated);
+    							if (rclistdata.rcl[i].user[0].username==u.get("WHOAMI_XHR").responseJSON.user.data.username){
+    								jq.rcldetail.append(
+    								"<a class='rcl_edit' href='#"+rclistdata.rcl[i].id+"'>edit</a> "
+    								+ "| <a class='rcl_delete' href='#"+rclistdata.rcl[i].id+"'>delete</a> "
+    								+ "</div></br></br>");
+    							}else{
+    								jq.rcldetail.append(
+    								"</div></br></br>");
+    							}
+    						//);
+    						
 					}
             	})
             }
@@ -370,30 +378,60 @@
         
     		rfl 
             	.done(function(rflistdata){
+            		//alert(JSON.stringify(rflistdata));
                 	$('#create-formRC').hide();
                 	$('#create-formRF').show();
                 	jq.rcldetail.text("");
-                	for (i = 0; i < rflistdata.meta.size; i++) { 
-                
-                		jq.rcldetail.append(
-    						i+1 
-    						+ ". <a href='media/"+rflistdata.rfl[i].data.file+"'>" 
-    						+ rflistdata.rfl[i].data.name 
-    						+ "<a> in <b>" 
-    						+ rcname
-    						+ "</b> </br> file address: "
-    						+ rflistdata.rfl[i].data.file
-    						+ "</br><a class='rcf_delete' href='#"+rflistdata.rfl[i].id+"'>delete</a>"
-    						+ "</br></br>"
-    						);
-					} 
-					//jq.rfldetail.append(JSON.stringify(author));
+                	var getuserbasercid = f.fetchMyRCL(rcid,1,0);
+                	
+                	getuserbasercid
+                		.done(function(searchdata){
+                			for (i = 0; i < rflistdata.meta.size; i++) { 
+                		
+                				jq.rcldetail.append(
+    								i+1 
+    								+ ". <a href='media/"+rflistdata.rfl[i].data.file+"'>" 
+    								+ rflistdata.rfl[i].data.name 
+    								+ "<a> in <b>" 
+    								+ rcname
+    								+ "</b> </br> file address: "
+    								+ rflistdata.rfl[i].data.file);
+    								if (u.get("WHOAMI_XHR").responseJSON.user.data.username == searchdata.rcl[0].user[0].username){
+    									jq.rcldetail.append(
+    									"</br><a class='rcf_delete' href='#"+rflistdata.rfl[i].id+"'>delete</a>"
+    									+ "</br></br>");
+    								}else{
+    									jq.rcldetail.append(
+    									"</br></br>");
+    								}
+							} 
+						})
 				
             	})
     	}
+    	
+    	//generate date with format YYYY-MM-DD
+    	function get_date(){
+    		var today = new Date();
+			var dd = today.getDate();
+			var mm = today.getMonth()+1; //January is 0!
+			var yyyy = today.getFullYear();
+
+			if(dd<10) {
+    			dd='0'+dd
+			} 
+
+			if(mm<10) {
+    			mm='0'+mm
+			} 
+			today = yyyy+'-'+mm+'-'+dd;
+			return today
+    	}
+
         
         //event to open RF based on RC id 
         $(document.body).on('click', 'a.rfl_link', function(){
+  			hideMessages();
   			rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
   			//alert(rc_id);	
@@ -403,17 +441,26 @@
         
         //event to trigger RC delete link
         $(document.body).on('click', 'a.rcl_delete', function(){
-        	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
-  			rc_id = rc_data[0];
-        	var api_rcDelete = f.deleteMyRC(rc_id);
-        	api_rcDelete
-                .done(function(){
-                    f.loadApp("repo");
-                })
+        	hideMessages();
+        	var result = confirm("want to delete?");
+			if (result==true) {
+    		//Logic to delete the item
+        		rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
+  				rc_id = rc_data[0];
+        		var api_rcDelete = f.deleteMyRC(rc_id);
+        		api_rcDelete
+                	.done(function(deleteRC){
+                		if (deleteRC.commit) {showMessage("Repository Container deleted successfully","pos");}
+                    	else {showMessage("Repository Container deleted failed.<br><br>Please try again.","neg");}
+                    	setupRepo(rc_id,rc_length,rc_page);
+                	})
+            
+			}
         });
         
         //event to trigger RC edit link
         $(document.body).on('click', 'a.rcl_edit', function(){
+        	hideMessages();
         	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
         	//alert(rc_id+" | "+rc_length+" | "+rc_page);
@@ -431,35 +478,34 @@
         
         //Navigation page RC
         $(document.body).on('click', 'a.rc_previous', function(){
+        	hideMessages();
         	rc_id = "";
         	rc_page = rc_page - 1;
         	if (rc_page < 0){rc_page = "0"}
         	jq.rcldetail.text("");
-        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
+        	hideMessages();
         	setupRepo(rc_id,rc_length,rc_page);
         });
         
         $(document.body).on('click', 'a.rc_next', function(){
+        	hideMessages();
         	rc_id = "";
         	rc_page = +rc_page + 1;
         	var max_rc_page = Math.round(+rc_tot_list/2)-1;
         	if (rc_page > max_rc_page){rc_page = max_rc_page}
         	jq.rcldetail.text("");
-        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
+        	hideMessages();
         	setupRepo(rc_id,rc_length,rc_page);
         });
         
-        // Create form for Repo container
+        // Create and Update form for Repo container
         $("#create-formRC").submit(function(e){
             e.preventDefault();
-            
-            //f.setTray("Loading...","indeterminate",false);
-            
+            f.setTray("Loading...","indeterminate",false);
             hideMessages();
             
-            
-            
             if (jq.rcbutton.val() == "Create"){ 
+            	statusRC = "created";
             	var api_data_createRC = {
   					"rc": [
     					{
@@ -478,7 +524,8 @@
             	//alert(JSON.stringify(api_data_createRC));               
             	var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
             } else {
-            
+                statusRC = "updated";
+            	var today = Date.now();
             	var api_data_createRC = {
   					"rc": [
     					{
@@ -488,7 +535,8 @@
         					"title": el.title.val(),
         					"body": el.body.val(),
         					"tags": el.tags.val(),
-        					"service": el.service.find(":selected").attr('value')
+        					"service": el.service.find(":selected").attr('value'),
+        					"date_updated": get_date()
       						},
       					"id": rc_id
     					}
@@ -497,27 +545,22 @@
 				//alert(JSON.stringify(api_data_createRC));
 				var api_rcCreate = f.fetchUpdateMyRC(api_data_createRC);
 			}
-            //jq.rcldetail.append(JSON.stringify(api_data_createRC));
             
             api_rcCreate
-                .done(function(){
-                    //f.loadApp("repo");
+                .done(function(createRC){
                     f.closeTray();
-                    f.loadApp("repo");
-                    //showMessage("Repository Container created successfully","pos");
-                    
-                    
+                    //show message for commit status
+                    if (createRC.commit) {showMessage("Repository Container "+statusRC+" successfully","pos");}
+                    else {showMessage("Repository Container "+statusRC+" failed.<br><br>Title, Body and Tags can not be blank.","neg");}
+                    setupRepo("",rc_length,rc_page);    
                 })
-                .fail(function(xhr){
-                    f.closeTray();
-                    showMessage("Repository Container created failed.<br><br>Please try again.","neg");
-                });
             
         });
         
         // Repo-File Views
         //event to trigger RF delete link
         $(document.body).on('click', 'a.rcf_delete', function(){
+        	hideMessages();
         	rf_id = $(this).attr('href').slice(1, $(this).attr('href').length);	
         	var api_rfDelete = f.deleteMyRF(+rf_id);
         	api_rfDelete
@@ -537,8 +580,11 @@
             	data: new FormData(this),
             	processData: false,
       			contentType: false,
-            	success: function(data) {
-                 	//alert(data);
+            	success: function() {
+                 	showMessage("File uploaded successfully","pos");
+            	},
+            	error: function(data) {
+                 	showMessage("Uploading file failed.<br><br>Title, name and file can not be blank.","neg");
             	}
         	});
         	e.preventDefault();

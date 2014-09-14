@@ -1,42 +1,4 @@
+{{ response }}
 
-		<!-- List of uploaded documents -->
-		{% if documents %}
-			<ul>
-			{% for document in documents %}
-				<li><a href="{{ document.file.url }}">{{ document.file.name }}</a></li>
-			{% endfor %}
-			</ul>
-		{% else %}
-			<p>No documents.</p>
-		{% endif %}
 		
-		{{ response }}
-
-		<!-- Upload form. Note enctype attribute! -->
-		<form action="{% url "upload" %}" method="post" enctype="multipart/form-data">
-			{% csrf_token %}
-			<div class="row">
-                    <div class="left col">
-                        <label for="id_name">Name</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_name" type="text" name="name" placeholder="Name">
-                        <input id="id_container" type="hidden" name="container" value="1">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_file">File</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_file" type="file" name="file" placeholder="File">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="right col">
-                        <input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
-                    </div>
-                </div>
-                
-		</form>
 		

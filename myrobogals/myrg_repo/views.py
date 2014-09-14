@@ -298,9 +298,7 @@ class EditRepoContainers(RobogalsAPIView):
             "success": {
                 "id": completed_repocontainer_updates
             },
-            "error": {
-                "msg":serialized_repocontainer.errors
-            }
+            "commit": serialized_repocontainer.is_valid()
         })
 
 class CreateRepoContainers(RobogalsAPIView):
@@ -377,7 +375,7 @@ class CreateRepoContainers(RobogalsAPIView):
             "success": {
                 "nonce_id": completed_repocontainer_creations
             },
-            "msg": serialized_repocontainer.is_valid()  
+            "commit": serialized_repocontainer.is_valid()  
         })
         
         
@@ -564,20 +562,16 @@ def upload(request):
                                                  container = repocontainer
                                                  )
                 uploadfile.save()
-            return HttpResponse(status=200)
+                status = "200"
         else:
             form = UploadFileForm() # A empty, unbound form
-            return HttpResponse(status=500)
-
-        # Load uploadfiles for the list page
-        #uploadfiles = RepoFile.objects.all()
+            status = "500"
+            
 
         # Render list page with the uploadfiles and the form --> page for testing purpose
-        #return render_to_response(
-             #'upload.html',
-             #{'response': request.POST},
-             #{'documents': uploadfiles, 'form': form, 'response': request.FILES},
-             #context_instance=RequestContext(request))
+        return render_to_response(
+             'upload.html',
+             {'response': status})
         
 # Receive the pre_delete signal and delete the file associated with the model instance.
 from django.db.models.signals import post_delete
