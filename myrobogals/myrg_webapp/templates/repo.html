@@ -194,14 +194,17 @@
         
         //Set global variable for RC and RF
         var rc_id = "";
-        var rc_length = "2";
+        var rc_length = "3"; //change this value to set total RC list per page
         var rc_page = "0";
-        var rc_tot_list = "";
+        var rc_tot_list = rc_length;
+        var max_rc_page = 0;
+        var looping = rc_length;
         var rc_title = "";
         var rc_data = "";
         var rf_id = "";
         var statusRC = "created";
         var RCusername = "";
+        
         
         // Grab jQuery objects from DOM elements
         jq.rcldetail = $("#rcl-detail");
@@ -330,6 +333,13 @@
     
         //call listing function and show them on the interface
         function setupRepo(rcid,rclength,rcpage){
+        	
+        	//to set max and min page
+        	max_rc_page = Math.ceil(rc_tot_list/rclength)-1;
+        	if (rcpage > max_rc_page){rcpage = max_rc_page}
+        	if (rcpage < 0){rcpage = "0"}
+        	
+        	//get the RC list
         	var rcl = f.fetchMyRCL(rcid,rclength,rcpage);
         	$('#create-formRC').show();
         	$('#create-formRF').hide();
@@ -338,9 +348,15 @@
             		rc_tot_list = rclistdata.meta.size;
             		rc_length = rclength;
                     rc_page = rcpage;
+                    
+                    //to set the lopping value to fix Uncaught TypeError: Cannot read property 'id' of undefined VM4627:178
+                    max_rc_page = Math.ceil(rc_tot_list/rc_length)-1;
+                    if (rc_page < max_rc_page){looping = rc_length;}
+                    else {looping = rc_tot_list % rc_length;if (looping == 0){looping = rc_length;}}
+                    
                     jq.rcldetail.text("");
             		jq.rcldetail.append("<div class='top_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>");
-                	for (i = 0; i < rc_length; i++) { 
+                	for (i = 0; i < rclength; i++) { 
                 		var no = (rc_page*rc_length) + i + 1;
                 		jq.rcldetail.append(
     							"<div class='info_rcl'>"
@@ -434,7 +450,6 @@
   			hideMessages();
   			rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
-  			//alert(rc_id);	
   			rc_title = rc_data[1];
   			getListFile(rc_id, rc_title);
         });
@@ -452,7 +467,9 @@
                 	.done(function(deleteRC){
                 		if (deleteRC.commit) {showMessage("Repository Container deleted successfully","pos");}
                     	else {showMessage("Repository Container deleted failed.<br><br>Please try again.","neg");}
-                    	setupRepo(rc_id,rc_length,rc_page);
+                    	rc_tot_list = rc_tot_list - 1;
+                    	if(rc_tot_list % rc_length == 0 && rc_page == max_rc_page){rc_page = rc_page - 1;}
+                    	setupRepo("",rc_length,rc_page);
                 	})
             
 			}
@@ -463,7 +480,6 @@
         	hideMessages();
         	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
-        	//alert(rc_id+" | "+rc_length+" | "+rc_page);
         	var api_rcEdit = f.fetchMyRCL(rc_id,rc_length, "0");
         	api_rcEdit
                 .done(function(RCbasedID){
@@ -481,7 +497,6 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = rc_page - 1;
-        	if (rc_page < 0){rc_page = "0"}
         	jq.rcldetail.text("");
         	hideMessages();
         	setupRepo(rc_id,rc_length,rc_page);
@@ -491,8 +506,6 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = +rc_page + 1;
-        	var max_rc_page = Math.round(+rc_tot_list/2)-1;
-        	if (rc_page > max_rc_page){rc_page = max_rc_page}
         	jq.rcldetail.text("");
         	hideMessages();
         	setupRepo(rc_id,rc_length,rc_page);
@@ -520,8 +533,7 @@
       					"nonce": "1"
     					}
   					]
-				}			
-            	//alert(JSON.stringify(api_data_createRC));               
+				}			              
             	var api_rcCreate = f.fetchCreateMyRC(api_data_createRC);
             } else {
                 statusRC = "updated";
@@ -542,7 +554,6 @@
     					}
   					]
 				}
-				//alert(JSON.stringify(api_data_createRC));
 				var api_rcCreate = f.fetchUpdateMyRC(api_data_createRC);
 			}
             
@@ -550,7 +561,7 @@
                 .done(function(createRC){
                     f.closeTray();
                     //show message for commit status
-                    if (createRC.commit) {showMessage("Repository Container "+statusRC+" successfully","pos");}
+                    if (createRC.commit) {showMessage("Repository Container "+statusRC+" successfully","pos");if(statusRC == "created"){rc_tot_list = rc_tot_list + 1;rc_page = max_rc_page + 1 }}
                     else {showMessage("Repository Container "+statusRC+" failed.<br><br>Title, Body and Tags can not be blank.","neg");}
                     setupRepo("",rc_length,rc_page);    
                 })
@@ -564,8 +575,10 @@
         	rf_id = $(this).attr('href').slice(1, $(this).attr('href').length);	
         	var api_rfDelete = f.deleteMyRF(+rf_id);
         	api_rfDelete
-                .done(function(){
-                    getListFile(rc_id, rc_title);
+                .done(function(deleteRF){
+                    if (deleteRF.commit) {showMessage("File deleted successfully","pos");}
+                    	else {showMessage("File deleted failed.<br><br>Please try again.","neg");}
+                    	getListFile(rc_id, rc_title);
                 })
         });
         

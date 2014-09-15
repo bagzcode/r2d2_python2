@@ -166,6 +166,7 @@ class DeleteRepoContainers(RobogalsAPIView):
         ids_to_remove = []
         failed_ids = {}
         affected_ids = []
+        commit = ""
         
         for idx,pk in enumerate(requested_ids):
             if not isinstance(pk, six.string_types):
@@ -200,7 +201,10 @@ class DeleteRepoContainers(RobogalsAPIView):
         for pk in non_deleted_ids:
             failed_ids.update({pk: "OBJECT_NOT_MODIFIED"})
         
-        
+        if failed_ids == {}:
+            commit = "true"
+        else:
+            commit = "false"
         
         return Response({
             "fail": {
@@ -208,7 +212,8 @@ class DeleteRepoContainers(RobogalsAPIView):
             },
             "success": {
                 "id": affected_ids
-            }
+            },
+            "commit": commit
         })
         
 class EditRepoContainers(RobogalsAPIView):
