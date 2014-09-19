@@ -305,8 +305,9 @@
 				if (i < 10){var days = "0"+i.toString();}else{days = i;}
 				dayfield.options[i-1]=new Option(i, days)
 			}
-			if (today.getDate() < 10) {var dates = "0"+today.getDate().toString();}else{dates = today.getDate();}
-			dayfield.options[today.getDate()+1]=new Option(dates, dates, true, true) //select today's day
+			var dates = today.getDate();
+			if (dates < 10) {var dates = "0"+dates.toString();}else{dates = dates;}
+			dayfield.options[dates-1]=new Option(dates, dates, true, true) //select today's day
 	
 			var monthtext=['0', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 			for (var mo=1; mo<13; mo++) 
