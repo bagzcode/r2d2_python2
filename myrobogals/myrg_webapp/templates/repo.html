@@ -68,23 +68,99 @@
     }
       
     
-    #links {
-        color: rgba(0,0,0,0.5);
-        margin: 1rem;
+    /*----- Tabs -----*/
+	.tabs {
+		width:100%;
+		display:inline-block;
+	}
+ 
+    /*----- Tab Links -----*/
+    /* Clearfix */
+    .tab-links:after {
+        display:block;
+        clear:both;
+        content:'';
     }
-    
-    #links a {
-        color: inherit;
-        text-decoration: none;
+ 
+    .tab-links li {
+        margin:0px 5px;
+        float:left;
+        list-style:none;
     }
-    
-    
-    html.large #content:before {
-        content: '';
-        display: inline-block;
-        height: 90%;
-        vertical-align: middle;
+ 
+        .tab-links a {
+            padding:9px 15px;
+            display:inline-block;
+            border-radius:3px 3px 0px 0px;
+            background:#7FB5DA;
+            font-size:16px;
+            font-weight:600;
+            color:#4c4c4c;
+            transition:all linear 0.15s;
+        }
+ 
+        .tab-links a:hover {
+            background:#a7cce5;
+            text-decoration:none;
+        }
+ 
+    li.active a, li.active a:hover {
+        background:#fff;
+        color:#4c4c4c;
     }
+ 
+    /*----- Content of Tabs -----*/
+    .tab-content {
+        padding:15px;
+        border-radius:3px;
+        box-shadow:-1px 1px 1px rgba(0,0,0,0.15);
+        background:#fff;
+    }
+ 
+	.tab {
+		display:none;
+	}
+
+	.tab.active {
+		display:block;
+	}
+	
+	
+	/*------ search ------*/
+	#search {
+		width:96%;
+    	box-sizing:border-box;
+    	-moz-box-sizing:border-box;/* Firefox */ 
+	}
+	
+	/*-----tabel-----*/
+	.rcl-container{
+		display: table;
+		border-collapse: collapse;
+		-webkit-width: 100%; /* Chrome, Safari, Opera */
+    	-moz-width: 100%; /* Firefox */  
+    	width: 100%;
+    }
+	.rcl-heading{
+		 font-weight: bold;
+		 display:table-row;
+		 background-color:#000;
+		 text-align: center;
+		 line-height: 25px;
+		 font-size: 14px;
+		 font-family:georgia;
+		 color:#fff;
+	
+	}
+	.rcl-table-row{  
+		 display:table-row;
+		 text-align: center;
+	}
+	.rcl-col{
+		display:table-cell;
+		border: 1px solid #CCC;
+	}
+
 </style>
 <div id="content" tabindex="0">
     <div id="hero">
@@ -92,91 +168,124 @@
             <h1>Repositories</h1>
         </div>
     </div>
+    
     <div class="row" style="margin-top: 1.5rem;">
     </div>
-     <div id="app-container">
-        <div class="container bg-rg-dark-blue" >
-            <div id="message-container">
-                <div class="messages" id="neg-message"></div>
-                <div class="messages" id="pos-message"></div>
-            </div>
-            <form id="create-formRC" method="post">
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_title">Title</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_title" type="text" name="title" placeholder="Title">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_body">Body</label>
-                    </div>
-                    <div class="col">
-                        <textarea id="id_body" type="text" name="body" placeholder="Body"></textarea>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_tags">Tags</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_tags" type="text" name="tags" placeholder="Tags">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_service">Service</label>
-                    </div>
-                    <div class="col">
-                    	<select id="id_service" name="service">
-  							<option value="10">Managers of your Robogals chapter</option>
-  							<option value="20">Everyone in your Robogals chapter</option>
-  							<option value="50">All Robogals chapters</option>
-  							<option value="99" selected >Public</option>
-						</select>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="right col">
-                        <input id="rc_create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
-                    </div>
-                </div>
-            </form>
-            
-            <form id="create-formRF" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_name">Name</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_name" type="text" name="name" placeholder="Name">
-                        <input id="id_container" type="hidden" name="container" value="1">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="left col">
-                        <label for="id_file">File</label>
-                    </div>
-                    <div class="col">
-                        <input id="id_file" type="file" name="file" placeholder="File">
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="right col">
-                        <input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
-                    </div>
-                </div>
-            </form>
+    
+    <div class="tabs">
+		<ul class="tab-links">
+			<li class="active"><a href="#tab1">List</a></li>
+			<li><a href="#tab2">New</a></li>
+		</ul>
+ 
+		<div class="tab-content">
+			<div id="tab1" class="tab active">
+				<table id="ListTable" width="100%">
+						<tr>
+							<td><input id="search" type="text" name="search" placeholder="Search..."></td>
+							<td width="20" align="center"><a class='rc_previous' href='#'> << </a></td> 
+							<td width="20" align="center"><a class='rc_previous' href='#'> < </a></td> 
+							<td width="60" align="center"><div id="currpage"></td> 
+							<td width="20" align="center"><a class='rc_next' href='#'> > </a></td>
+							<td width="20" align="center"><a class='rc_next' href='#'> >> </a></td>
+						</tr>
+						<tr><td colspan = "6"><p></p></td></tr>
+						<tr>
+							<td colspan = "6">
+								<div class="rcl-container">
+									<div id="rcl-detail"></div>
+								</div>				
+							</td>
+						</tr>
+					</table>
+			</div>
+ 
+			<div id="tab2" class="tab">
+					<div id="app-container">
+						<div class="container bg-rg-dark-blue" >
+							<div id="message-container">
+								<div class="messages" id="neg-message"></div>
+								<div class="messages" id="pos-message"></div>
+							</div>
+							<form id="create-formRC" method="post">
+								<div class="row">
+									<div class="left col">
+										<label for="id_title">Title</label>
+									</div>
+									<div class="col">
+										<input id="id_title" type="text" name="title" placeholder="Title">
+									</div>
+								</div>
+								<div class="row">
+									<div class="left col">
+										<label for="id_body">Body</label>
+									</div>
+									<div class="col">
+										<textarea id="id_body" type="text" name="body" placeholder="Body"></textarea>
+									</div>
+								</div>
+								<div class="row">
+									<div class="left col">
+										<label for="id_tags">Tags</label>
+									</div>
+									<div class="col">
+										<input id="id_tags" type="text" name="tags" placeholder="Tags">
+									</div>
+								</div>
+								<div class="row">
+									<div class="left col">
+										<label for="id_service">Service</label>
+									</div>
+									<div class="col">
+										<select id="id_service" name="service">
+											<option value="10">Managers of your Robogals chapter</option>
+											<option value="20">Everyone in your Robogals chapter</option>
+											<option value="50">All Robogals chapters</option>
+											<option value="99" selected >Public</option>
+										</select>
+									</div>
+								</div>
+								<div class="row">
+									<div class="right col">
+										<input id="rc_create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
+									</div>
+								</div>
+							</form>
+			
+							<form id="create-formRF" method="post" enctype="multipart/form-data">
+								{% csrf_token %}
+								<div class="row">
+									<div class="left col">
+										<label for="id_name">Name</label>
+									</div>
+									<div class="col">
+										<input id="id_name" type="text" name="name" placeholder="Name">
+										<input id="id_container" type="hidden" name="container" value="1">
+									</div>
+								</div>
+								<div class="row">
+									<div class="left col">
+										<label for="id_file">File</label>
+									</div>
+									<div class="col">
+										<input id="id_file" type="file" name="file" placeholder="File">
+									</div>
+								</div>
+								<div class="row">
+									<div class="right col">
+										<input id="create" class="bg-rg-dark-green mobile-width-100" type="submit" value="Create">
+									</div>
+								</div>
+							</form>
 
-            
-        </div>
-    </div>
-    <div class="row" style="margin-top: 1.5rem;">
-            <div class="col" id="rcl-detail" style="background: #fff; padding: 1.6rem; font-size: 1.2em;"></div>
-    </div>
+						</div>
+					</div>
+				
+			</div>
+		</div>
+	</div>
+     
+    
     <div class="row" id="links">
         <div class="col"><a href="http://localhost:3000/?app=repo-files"><i class="fa fa-reply"></i> Return to robogals.org</a></div>
     </div>
@@ -204,6 +313,8 @@
         var rf_id = "";
         var statusRC = "created";
         var RCusername = "";
+        var filter = "all";
+        var keyword = "";
         
         
         // Grab jQuery objects from DOM elements
@@ -243,7 +354,28 @@
         }
         
         //API
-        f.fetchMyRCL = function(rc_id,rc_length,rc_page){
+        f.fetchMyRCL = function(rc_id,rc_length,rc_page, filter, keyword){
+        	var filter = filter || "all";
+        	var keyword = keyword || "";
+        	var key_title = "";
+        	var key_tags = "";
+        	
+        	if (filter == "all")
+        	{
+        		key_title = keyword;
+        		key_tags = keyword;
+        	}
+        	else if (filter == "title")
+        	{
+        		key_title = keyword;
+        		key_tags = "";
+        	}
+        	else if (filter == "tags")
+        	{
+        		key_title = "";
+        		key_tags = keyword;
+        	}
+        	//alert(key_title+" / "+key_tags);
         	var api_data_rcl = {
                     	"pagination": 
                     		{
@@ -257,13 +389,15 @@
       							"search": rc_id
     							},
     							{
-      							"field": "title"
+      							"field": "title",
+      							"search": key_title
     							},
     							{
       							"field": "body"
     							},
     							{
-      							"field": "tags"
+      							"field": "tags",
+      							"search": key_tags
     							},
     							{
       							"field": "service"
@@ -332,7 +466,7 @@
     	}
     
         //call listing function and show them on the interface
-        function setupRepo(rcid,rclength,rcpage){
+        function setupRepo(rcid,rclength,rcpage,filter,keyword){
         	
         	//to set max and min page
         	max_rc_page = Math.ceil(rc_tot_list/rclength)-1;
@@ -340,7 +474,7 @@
         	if (rcpage < 0){rcpage = "0"}
         	
         	//get the RC list
-        	var rcl = f.fetchMyRCL(rcid,rclength,rcpage);
+        	var rcl = f.fetchMyRCL(rcid,rclength,rcpage,filter,keyword);
         	$('#create-formRC').show();
         	$('#create-formRF').hide();
         	rcl 
@@ -354,34 +488,31 @@
                     if (rc_page < max_rc_page){looping = rc_length;}
                     else {looping = rc_tot_list % rc_length;if (looping == 0){looping = rc_length;}}
                     
+                    $('#currpage').text((+rc_page+1).toString()+"/"+(max_rc_page+1).toString());
                     jq.rcldetail.text("");
-            		jq.rcldetail.append("<div class='top_navigation' align='center' ><a class='rc_previous' href='#'><<</a> || <a class='rc_next' href='#'>>></a></div>");
+                    jq.rcldetail.append("<div class='rcl-heading'>"
+										 + "<div class='rcl-col'>No</div>"
+										 + "<div class='rcl-col'>Title</div>"
+										 + "<div class='rcl-col'>Tags</div>"
+										 + "<div class='rcl-col'>Creator</div>"
+										 + "<div class='rcl-col'>Date</div>"
+										 + "<div class='rcl-col'>Action</div>"
+									+ "</div>");
                 	for (i = 0; i < rclength; i++) { 
                 		var no = (rc_page*rc_length) + i + 1;
                 		jq.rcldetail.append(
-    							"<div class='info_rcl'>"
-    							+ no 
-    							+ ". <b><a class='rfl_link' href='#"+rclistdata.rcl[i].id+"_"+rclistdata.rcl[i].data.title+"'>" 
-    							+ rclistdata.rcl[i].data.title +"</a></b>"
-    							+ "</a> by " 
-    							+ rclistdata.rcl[i].user[0].username
-    							+ "</br> content: "
-    							+ rclistdata.rcl[i].data.body
-    							+ "</br> tags: <i>"
-    							+ rclistdata.rcl[i].data.tags
-    							+ "</i></br> created: "
-    							+ rclistdata.rcl[i].data.date_created
-    							+ ", updated: "
-    							+ rclistdata.rcl[i].data.date_updated);
-    							if (rclistdata.rcl[i].user[0].username==u.get("WHOAMI_XHR").responseJSON.user.data.username){
-    								jq.rcldetail.append(
-    								"<a class='rcl_edit' href='#"+rclistdata.rcl[i].id+"'>edit</a> "
-    								+ "| <a class='rcl_delete' href='#"+rclistdata.rcl[i].id+"'>delete</a> "
-    								+ "</div></br></br>");
-    							}else{
-    								jq.rcldetail.append(
-    								"</div></br></br>");
-    							}
+    							"<div class='rcl-table-row'>"
+    							+ "<div class='rcl-col'>"+ no + "</div>"
+    							+ "<div class='rcl-col'> <b><a class='rfl_link' href='#" + rclistdata.rcl[i].id + "_" + rclistdata.rcl[i].data.title + "'>" + rclistdata.rcl[i].data.title + "</a></b></div>"
+    							+ "<div class='rcl-col'>" + rclistdata.rcl[i].data.tags + "</div>"
+    							+ "<div class='rcl-col'>" + rclistdata.rcl[i].user[0].username + "</div>"
+    							+ "<div class='rcl-col'>" + rclistdata.rcl[i].data.date_created + "</div>" 
+    							//if (rclistdata.rcl[i].user[0].username==u.get("WHOAMI_XHR").responseJSON.user.data.username){
+    							+ "<div class='rcl-col'><a class='rcl_edit' href='#" + rclistdata.rcl[i].id + "'>edit</a> | <a class='rcl_delete' href='#" + rclistdata.rcl[i].id + "'>delete</a> </div> "
+    							//}else{
+    							//+ "<td></td>"
+    							//}
+    							+ "</div>");
     						//);
     						
 					}
@@ -398,7 +529,7 @@
                 	$('#create-formRC').hide();
                 	$('#create-formRF').show();
                 	jq.rcldetail.text("");
-                	var getuserbasercid = f.fetchMyRCL(rcid,1,0);
+                	var getuserbasercid = f.fetchMyRCL(rcid,1,0,"all","");
                 	
                 	getuserbasercid
                 		.done(function(searchdata){
@@ -469,7 +600,7 @@
                     	else {showMessage("Repository Container deleted failed.<br><br>Please try again.","neg");}
                     	rc_tot_list = rc_tot_list - 1;
                     	if(rc_tot_list % rc_length == 0 && rc_page == max_rc_page){rc_page = rc_page - 1;}
-                    	setupRepo("",rc_length,rc_page);
+                    	setupRepo("",rc_length,rc_page,filter,keyword);
                 	})
             
 			}
@@ -480,7 +611,7 @@
         	hideMessages();
         	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
-        	var api_rcEdit = f.fetchMyRCL(rc_id,rc_length, "0");
+        	var api_rcEdit = f.fetchMyRCL(rc_id,rc_length, "0","all","");
         	api_rcEdit
                 .done(function(RCbasedID){
                     //f.loadApp("repo");
@@ -499,7 +630,7 @@
         	rc_page = rc_page - 1;
         	jq.rcldetail.text("");
         	hideMessages();
-        	setupRepo(rc_id,rc_length,rc_page);
+        	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
         $(document.body).on('click', 'a.rc_next', function(){
@@ -508,7 +639,7 @@
         	rc_page = +rc_page + 1;
         	jq.rcldetail.text("");
         	hideMessages();
-        	setupRepo(rc_id,rc_length,rc_page);
+        	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
         // Create and Update form for Repo container
@@ -563,7 +694,7 @@
                     //show message for commit status
                     if (createRC.commit) {showMessage("Repository Container "+statusRC+" successfully","pos");if(statusRC == "created"){rc_tot_list = rc_tot_list + 1;rc_page = max_rc_page + 1 }}
                     else {showMessage("Repository Container "+statusRC+" failed.<br><br>Title, Body and Tags can not be blank.","neg");}
-                    setupRepo("",rc_length,rc_page);    
+                    setupRepo("",rc_length,rc_page,filter,keyword);    
                 })
             
         });
@@ -613,8 +744,23 @@
         	
         });
 
+		//search function
+		$("#search").keyup(function() {
+			var val = $.trim(this.value).toUpperCase();
+			if (val === "")
+				//$cells.parent().show();
+				setupRepo(rc_id,rc_length,rc_page,"all",val);
+			else {
+				//$cells.parent().hide();
+				//$cells.filter(function() {
+				//	return -1 != $(this).text().toUpperCase().indexOf(val); }).parent().show();
+				//alert(val);
+				setupRepo(rc_id,rc_length,rc_page,"tags",val);
+				}
+		});
+		
 		//set initial repo environment
-        setupRepo(rc_id,rc_length,rc_page);   
+        setupRepo(rc_id,rc_length,rc_page,filter,keyword);   
                 
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();
@@ -636,7 +782,19 @@
         myRG.jq.body.attr("data-app",resourceName);
         ga('send', 'pageview');
     
-        
+        jQuery(document).ready(function() {
+			jQuery('.tabs .tab-links a').on('click', function(e)  {
+				var currentAttrValue = jQuery(this).attr('href');
+ 
+				// Show/Hide Tabs
+				jQuery('.tabs ' + currentAttrValue).show().siblings().hide();
+ 
+				// Change/remove current tab to active
+				jQuery(this).parent('li').addClass('active').siblings().removeClass('active');
+ 
+				e.preventDefault();
+			});
+		});
         
     })();
 </script>
