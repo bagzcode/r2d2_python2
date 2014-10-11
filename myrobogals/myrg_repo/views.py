@@ -65,6 +65,8 @@ class ListRepoContainers(RobogalsAPIView):
         
         
         # Filter
+        key_title = "~"
+        key_tags = "~"
         filter_dict = {} 
         sort_fields = []
         fields = ["id", "user", "role"] 
@@ -92,7 +94,12 @@ class ListRepoContainers(RobogalsAPIView):
                 return Response({"detail":"`{}` is not a valid field name.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
                 
             if (field_query is not None):
-                filter_dict.update({field_name+"__icontains": str(field_query)})
+                if (field_name == "title" and field_query != ""):
+                    key_title = str(field_query)
+                elif (field_name == "tags" and field_query != ""):
+                    key_tags = str(field_query )
+                else:
+                    filter_dict.update({field_name+"__icontains": str(field_query)})
             
             if (field_order is not None):
                 field_order = str(field_order)
@@ -108,9 +115,13 @@ class ListRepoContainers(RobogalsAPIView):
         
         # Build query
         query = RepoContainer.objects.filter(service__gt=0)
-        query = query.filter(**filter_dict)
+        if (key_title == "~" and key_tags == "~" ):
+            query = query.filter(**filter_dict)
+        else:
+            query = query.filter(Q(title__icontains=key_title) | Q(tags__icontains=key_tags))
         query = query.order_by(*sort_fields)
         
+            
         query_size = query.count()
         
         query = query[pagination_start_index:pagination_end_index]
