@@ -176,6 +176,7 @@
 		<ul class="tab-links">
 			<li class="active"><a id="tab1" href="#tab1">List</a></li>
 			<li><a id="tab2" href="#tab2">New/Update</a></li>
+			<li><a id="tab3" href="#tab3">Detail</a></li>
 		</ul>
  
 		<div class="tab-content">
@@ -193,7 +194,7 @@
 						<tr>
 							<td colspan = "6">
 								<div class="rcl-container">
-									<div id="rcl-detail"></div>
+									<div id="rcl-list"></div>
 								</div>				
 							</td>
 						</tr>
@@ -282,6 +283,12 @@
 					</div>
 				
 			</div>
+			<div id="tab3" class="tab">
+				<div class="rcl-container">
+					<div id="rcl-detail">Please click a link on <i>Title's column</i> on <b>"List"</b> tab to see detail Repository</div>
+				</div>				
+							
+			</div>
 		</div>
 	</div>
      
@@ -318,6 +325,7 @@
         
         
         // Grab jQuery objects from DOM elements
+        jq.rcllist = $("#rcl-list");
         jq.rcldetail = $("#rcl-detail");
         jq.rcbutton = $("#rc_create");
         
@@ -475,14 +483,14 @@
 			return data_out.join(' ');
 		}
         
-        //call listing function and show them on the interface
+        //call listing function 
         function setupRepo(rcid,rclength,rcpage,filter,keyword){
         	
         	//to set max and min page
         	max_rc_page = Math.ceil(rc_tot_list/rclength)-1;
         	if (rcpage > max_rc_page){rcpage = max_rc_page}
         	if (rcpage < 0){rcpage = "0"}
-        	
+        	//alert(rclength+"|"+rcpage);
         	//get the RC list
         	var rcl = f.fetchMyRCL(rcid,rclength,rcpage,filter,keyword);
         	$('#create-formRC').show();
@@ -499,8 +507,8 @@
                     else {looping = rc_tot_list % rc_length;if (looping == 0){looping = rc_length;}}
                     
                     $('#currpage').text((+rc_page+1).toString()+"/"+(max_rc_page+1).toString());
-                    jq.rcldetail.text("");
-                    jq.rcldetail.append("<div class='rcl-heading'>"
+                    jq.rcllist.text("");
+                    jq.rcllist.append("<div class='rcl-heading'>"
 										 + "<div class='rcl-col'>No</div>"
 										 + "<div class='rcl-col'>Title</div>"
 										 + "<div class='rcl-col'>Tags</div>"
@@ -508,20 +516,20 @@
 										 + "<div class='rcl-col'>Date</div>"
 										 + "<div class='rcl-col'>Action</div>"
 									+ "</div>");
-                	for (i = 0; i < rclength; i++) { 
+                	for (i = 0; i < looping; i++) { 
                 		var no = (rc_page*rc_length) + i + 1;
-                		jq.rcldetail.append(
+                		jq.rcllist.append(
     							"<div class='rcl-table-row'>"
     							+ "<div class='rcl-col'>"+ no + "</div>"
-    							+ "<div class='rcl-col'><a class='rfl_link' href='#" + rclistdata.rcl[i].id + "_" + rclistdata.rcl[i].data.title + "'>" + rclistdata.rcl[i].data.title + "</a></div>"
-    							+ "<div class='rcl-col'>" + givealink(rclistdata.rcl[i].data.tags, 'search_tags') + "</div>"
+    							+ "<div class='rcl-col' style='text-align: left; width:600px;'><a class='rfl_link' href='#" + rclistdata.rcl[i].id + "_" + rclistdata.rcl[i].data.title + "'>" + rclistdata.rcl[i].data.title + "</a></div>"
+    							+ "<div class='rcl-col' style='width:400px;'>" + givealink(rclistdata.rcl[i].data.tags, 'search_tags') + "</div>"
     							+ "<div class='rcl-col'>" + rclistdata.rcl[i].user[0].username + "</div>"
-    							+ "<div class='rcl-col'>" + rclistdata.rcl[i].data.date_created + "</div>"
+    							+ "<div class='rcl-col' style='width:250px;'>" + rclistdata.rcl[i].data.date_created + "</div>"
     							//if (rclistdata.rcl[i].user[0].username==u.get("WHOAMI_XHR").responseJSON.user.data.username){
-    							//jq.rcldetail.append(
-    							+ "<div class='rcl-col'><a class='rcl_edit' href='#" + rclistdata.rcl[i].id + "'> update </a> | <a class='rcl_delete' href='#" + rclistdata.rcl[i].id + "'> delete </a> </div> "
+    							//jq.rcllist.append(
+    							+ "<div class='rcl-col' style='width:200px;'><a class='rcl_edit' href='#" + rclistdata.rcl[i].id + "'> update </a> | <a class='rcl_delete' href='#" + rclistdata.rcl[i].id + "'> delete </a> </div> "
     							//}else{
-    							//jq.rcldetail.append(
+    							//jq.rcllist.append(
     							//	"<div class='rcl-col'></div>"
     							+ "</div>");
     						
@@ -540,7 +548,7 @@
                 	$('#create-formRC').hide();
                 	$('#create-formRF').show();
                 	
-                	$('#rc_toolbar').hide();
+                	//$('#rc_toolbar').hide();
                 	jq.rcldetail.text("");
                 	var getuserbasercid = f.fetchMyRCL(rcid,1,0,"all","");
                 	
@@ -561,7 +569,7 @@
                 			for (i = 0; i < rflistdata.meta.size; i++) { 
                 				jq.rcldetail.append(
     								i+1 
-    								+ ". <a href='media/"+rflistdata.rfl[i].data.file+"'>" + rflistdata.rfl[i].data.name + "<a></br>"
+    								+ ". <a href='media/"+rflistdata.rfl[i].data.file+"' target='_blank'>" + rflistdata.rfl[i].data.name + "<a></br>"
     								+ " location: " + rflistdata.rfl[i].data.file);
     								if (u.get("WHOAMI_XHR").responseJSON.user.data.username == searchdata.rcl[0].user[0].username){
     									jq.rcldetail.append(
@@ -602,6 +610,8 @@
   			rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
   			rc_title = rc_data[1];
+  			jQuery('.tabs ' + "#tab3").show().siblings().hide();
+  			$("#tab3").parent('li').addClass('active').siblings().removeClass('active');
   			getListFile(rc_id, rc_title);
         });
         
@@ -630,6 +640,7 @@
         $(document.body).on('click', 'a.rcl_edit', function(){
         	// Show/Hide Tabs
 			jQuery('.tabs ' + "#tab2").show().siblings().hide();
+			$("#tab2").parent('li').addClass('active').siblings().removeClass('active');
         	hideMessages();
         	rc_data = $(this).attr('href').slice(1, $(this).attr('href').length).split("_");	
   			rc_id = rc_data[0];
@@ -650,8 +661,9 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = rc_page - 1;
-        	jq.rcldetail.text("");
+        	jq.rcllist.text("");
         	hideMessages();
+        	//alert(rc_length+"|"+rc_page);
         	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
@@ -659,8 +671,9 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = +rc_page + 1;
-        	jq.rcldetail.text("");
+        	jq.rcllist.text("");
         	hideMessages();
+        	//alert(rc_length+"|"+rc_page);
         	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
@@ -668,8 +681,9 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = 0;
-        	jq.rcldetail.text("");
+        	jq.rcllist.text("");
         	hideMessages();
+        	//alert(rc_length+"|"+rc_page);
         	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
@@ -677,8 +691,9 @@
         	hideMessages();
         	rc_id = "";
         	rc_page = +max_rc_page;
-        	jq.rcldetail.text("");
+        	jq.rcllist.text("");
         	hideMessages();
+        	//alert(rc_length+"|"+rc_page);
         	setupRepo(rc_id,rc_length,rc_page,filter,keyword);
         });
         
@@ -794,25 +809,30 @@
 			var val = $.trim(this.value).toUpperCase();
 			if (val === "")
 			{
-				setupRepo(rc_id,rc_length,rc_page,"all",val);
+				filter = "all";
+				keyword = val;
 			}
 			else 
 			{
-				var keyword = val.split(":");
+				var keywords = val.split(":");
 				//alert(keyword[1]);
-				if (keyword[0] == "TITLE")
+				if (keywords[0] == "TITLE")
 				{
-					setupRepo(rc_id,rc_length,rc_page,"title",keyword[1]);
+					filter = "title";
+					keyword = keywords[1];
 				}
 				else if (keyword[0] == "TAGS")
 				{
-					setupRepo(rc_id,rc_length,rc_page,"tags",keyword[1]);
+					filter = "tags";
+					keyword = keywords[1];
 				}
 				else
 				{
-					setupRepo(rc_id,rc_length,rc_page,"all",val);
+					filter = "all";
+					keyword = val;
 				}
 			}
+			setupRepo(rc_id,rc_length,rc_page,filter,keyword);
 		});
 		
 		//event to set search box with clicked title 
@@ -870,6 +890,8 @@
         	hideMessages();
         	document.getElementById("create-formRC").reset();
         	jq.rcbutton.val("Create");
+        	$('#create-formRC').show();
+            $('#create-formRF').hide();
         });
         
     })();
