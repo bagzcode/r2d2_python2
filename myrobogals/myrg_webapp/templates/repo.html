@@ -322,6 +322,7 @@
         var RCusername = "";
         var filter = "all";
         var keyword = "";
+        var detail_tab = "";
         
         
         // Grab jQuery objects from DOM elements
@@ -613,6 +614,7 @@
   			jQuery('.tabs ' + "#tab3").show().siblings().hide();
   			$("#tab3").parent('li').addClass('active').siblings().removeClass('active');
   			getListFile(rc_id, rc_title);
+  			if (detail_tab=="")detail_tab = "active";
         });
         
         //event to trigger RC delete link
@@ -854,8 +856,11 @@
         // Autofocus on content (rather than <input>, which brings virtual keyboards up)
         $("#content").focus();
         
-        // Hide messages by default
+        // Hide messages and form-RF by default
         hideMessages();
+        $('#create-formRC').show();
+        $('#create-formRF').hide();
+        
         
         // Update title, strip URL params by replacing state
         f.pushState({
@@ -886,6 +891,7 @@
 			});
 		});
 		
+		//tab list
 		$(document.body).on('click', 'a#tab1', function(){
         	//reseting RC-form to default
         	hideMessages();
@@ -895,14 +901,19 @@
             $('#create-formRF').hide();
         });
         
+        //tab detail
         $(document.body).on('click', 'a#tab3', function(){
         	//reseting RC-form to default
         	hideMessages();
-        	document.getElementById("create-formRC").reset();
-        	jq.rcbutton.val("Create");
-        	$('#create-formRC').hide();
-            $('#create-formRF').show();
+        	alert(detail_tab);
+        	if (detail_tab == "active")
+        	{	
+        		$('#create-formRC').hide();
+            	$('#create-formRF').show();
+            	detail_tab == "";
+            }
         });
+        
         
     })();
 </script>
