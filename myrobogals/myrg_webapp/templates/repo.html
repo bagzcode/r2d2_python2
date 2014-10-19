@@ -806,6 +806,7 @@
 
 		//search function
 		var $mySearch = $("#search").on("keyup",function(){
+			rc_page = "0";
 			var val = $.trim(this.value).toUpperCase();
 			if (val === "")
 			{
@@ -892,6 +893,15 @@
         	jq.rcbutton.val("Create");
         	$('#create-formRC').show();
             $('#create-formRF').hide();
+        });
+        
+        $(document.body).on('click', 'a#tab3', function(){
+        	//reseting RC-form to default
+        	hideMessages();
+        	document.getElementById("create-formRC").reset();
+        	jq.rcbutton.val("Create");
+        	$('#create-formRC').hide();
+            $('#create-formRF').show();
         });
         
     })();
