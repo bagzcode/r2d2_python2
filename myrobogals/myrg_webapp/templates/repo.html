@@ -815,13 +815,13 @@
 			else 
 			{
 				var keywords = val.split(":");
-				//alert(keyword[1]);
+				//alert(keywords[0]);
 				if (keywords[0] == "TITLE")
 				{
 					filter = "title";
 					keyword = keywords[1];
 				}
-				else if (keyword[0] == "TAGS")
+				else if (keywords[0] == "TAGS")
 				{
 					filter = "tags";
 					keyword = keywords[1];
