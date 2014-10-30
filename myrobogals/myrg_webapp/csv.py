@@ -87,7 +87,7 @@ def convert_csv(request):
         app_label = "myrg_repo"
                 
     model = get_model(app_label, model_name)
-    queryset = model.objects.all()
+    
     
     fields_request = request.POST['field']
     if fields_request != "":
@@ -105,7 +105,12 @@ def convert_csv(request):
             
         fields.append(field_name)
     
+    startdate = request.POST['startdate']
+    enddate = request.POST['enddate']
     
+    queryset = model.objects.all()
+    if startdate != "" and enddate != "":
+        queryset = queryset.filter(date_created__range=[startdate, enddate])
     #fields = ['id']#queryset.model._meta.get_all_field_names()
     #fields = ['body', 'date_created', 'date_updated', 'id', 'role', 'service', 'tags', 'title', 'user']#
     
