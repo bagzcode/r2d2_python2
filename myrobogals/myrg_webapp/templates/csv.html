@@ -310,6 +310,7 @@
         $("#generate_csv").submit(function(e){
         	f.setTray("Downloading...","Indeterminate",false);
         	//http://portfolio.planetjon.ca/2014/01/26/submit-file-input-via-ajax-jquery-easy-way/
+        	//combined by using => http://stackoverflow.com/questions/16086162/handle-file-download-from-ajax-post
         	$.ajax({
             	type: "POST",
             	url: "app/csv",
