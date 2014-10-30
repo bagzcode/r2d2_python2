@@ -305,6 +305,7 @@
             	data: $("#generate_csv").serialize(),
             	success: function(response, status, xhr) {
 					showMessage("CSV File Downloading successfully","pos");
+					//alert(data);
 					// check for a filename
 					var filename = "";
 					var disposition = xhr.getResponseHeader('Content-Disposition');

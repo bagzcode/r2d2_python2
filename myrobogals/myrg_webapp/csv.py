@@ -7,6 +7,9 @@ from myrg_users.models import RobogalsUser
 from myrg_groups.models import Group
 from myrg_repo.models import RepoContainer
 
+from django.db.models.fields import FieldDoesNotExist
+from rest_framework.response import Response
+from rest_framework import status
 from django.shortcuts import render_to_response
 from django.template import RequestContext
 import re
@@ -75,11 +78,6 @@ def admin_list_export(request, model_name, app_label, queryset=None, fields=None
 def convert_csv(request):
     fields = [] 
     model_name = request.POST['model']
-    fields_request = request.POST['field']
-    if fields_request != "":
-        fieldlist = re.sub(r'\s+', '', fields_request).split(",")
-    else:
-        fieldlist = ["id"]
     
     if model_name == "robogalsuser":
     	app_label = "myrg_users"
@@ -91,19 +89,28 @@ def convert_csv(request):
     model = get_model(app_label, model_name)
     queryset = model.objects.all()
     
+    fields_request = request.POST['field']
+    if fields_request != "":
+        fieldlist = re.sub(r'\s+', '', fields_request).split(",")
+    else:
+        fieldlist = ""#model._meta.get_all_field_names()
+    
     for field_name in fieldlist:
         try:
-            queryset.model._meta.get_field_by_name(field_name)
-            fields.append(field_name)
+            queryset.model._meta.get_field_by_name(field_name)    
         except FieldDoesNotExist:
+            #skip
+            #queryset.model._meta.exclude(field_name)
             return Response({"detail":"`{}` is not a valid field name.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
+            
+        fields.append(field_name)
     
     
     #fields = ['id']#queryset.model._meta.get_all_field_names()
     #fields = ['body', 'date_created', 'date_updated', 'id', 'role', 'service', 'tags', 'title', 'user']#
     
     return export(queryset, fields)
-    #return render_to_response('csv.html',{'response': fields_request}, context_instance=RequestContext(request))
+    #return render_to_response('csv.html',{'response': fields}, context_instance=RequestContext(request))
     
 
   
