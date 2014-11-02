@@ -95,20 +95,22 @@ def convert_csv(request):
     else:
         fieldlist = ""#model._meta.get_all_field_names()
     
+    queryset = model.objects.all()
     for field_name in fieldlist:
         try:
-            queryset.model._meta.get_field_by_name(field_name)    
+            queryset.model._meta.get_field_by_name(field_name)
+            fields.append(field_name)    
         except FieldDoesNotExist:
             #skip
             #queryset.model._meta.exclude(field_name)
             return Response({"detail":"`{}` is not a valid field name.".format(field_name)}, status=status.HTTP_400_BAD_REQUEST)
             
-        fields.append(field_name)
+        
     
     startdate = request.POST['startdate']
     enddate = request.POST['enddate']
     
-    queryset = model.objects.all()
+    
     if startdate != "" and enddate != "":
         queryset = queryset.filter(date_created__range=[startdate, enddate])
     #fields = ['id']#queryset.model._meta.get_all_field_names()
