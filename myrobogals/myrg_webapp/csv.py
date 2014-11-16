@@ -1,4 +1,5 @@
 import csv
+import datetime
 from django.http import HttpResponse, HttpResponseForbidden
 from django.template.defaultfilters import slugify
 from django.db.models.loading import get_model
@@ -80,7 +81,7 @@ def convert_csv(request):
     model_name = request.POST['model']
     
     if model_name == "robogalsuser":
-    	app_label = "myrg_users"
+        app_label = "myrg_users"
     elif model_name == "group":
         app_label = "myrg_groups"
     elif model_name == "repocontainer":
@@ -110,9 +111,15 @@ def convert_csv(request):
     startdate = request.POST['startdate']
     enddate = request.POST['enddate']
     
-    
     if startdate != "" and enddate != "":
-        queryset = queryset.filter(date_created__range=[startdate, enddate])
+        get_startdate = startdate.split("-")
+        get_enddate = enddate.split("-")
+        start_date = datetime.date(int(get_startdate[0]),int(get_startdate[1]),int(get_startdate[2]))
+        end_date = datetime.date(int(get_enddate[0]),int(get_enddate[1]),int(get_enddate[2]))
+        if model_name == "robogalsuser":
+            queryset = queryset.filter(date_joined__range=(start_date, end_date))
+        else:
+            queryset = queryset.filter(date_created__range=(start_date, end_date))
     #fields = ['id']#queryset.model._meta.get_all_field_names()
     #fields = ['body', 'date_created', 'date_updated', 'id', 'role', 'service', 'tags', 'title', 'user']#
     

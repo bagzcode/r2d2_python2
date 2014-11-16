@@ -41,10 +41,10 @@ class RepoContainer(models.Model):
                                                default=99,
                                                blank=False
                                                )
-    date_created = models.DateField(_('date created'),
+    date_created = models.DateTimeField(_('date created'),
                                     blank=False,
                                     default=timezone.now)
-    date_updated = models.DateField(_('date updated'),
+    date_updated = models.DateTimeField(_('date updated'),
                                     blank=False,
                                     default=timezone.now)
     
