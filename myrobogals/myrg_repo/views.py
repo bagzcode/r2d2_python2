@@ -7,7 +7,7 @@ from django.utils.encoding import smart_text
 from myrg_core.classes import RobogalsAPIView
 from rest_framework.parsers import FileUploadParser
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework import status
 
 from django.db.models.fields import FieldDoesNotExist
@@ -25,6 +25,9 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 
+from myrg_permissions.custom_permissions import AnyPermissions, IsTeamMember, IsLucky
+from rest_framework import permissions
+
 PAGINATION_MAX_LENGTH = 1000
 
 MAX_REPOS = 1
@@ -32,6 +35,8 @@ MAX_REPOS = 1
 # Repo Container
 ################################################################################
 class ListRepoContainers(RobogalsAPIView):
+    permission_classes = [AnyPermissions]
+    any_permission_classes = [IsAdminUser, IsTeamMember]
     def post(self, request, format=None):
         from myrg_users.serializers import RobogalsUserSerializer
         from myrg_users.models import RobogalsUser
