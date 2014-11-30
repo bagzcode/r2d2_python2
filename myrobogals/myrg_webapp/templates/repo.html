@@ -592,6 +592,9 @@
 			var dd = today.getDate();
 			var mm = today.getMonth()+1; //January is 0!
 			var yyyy = today.getFullYear();
+			var HH = today.getHours();
+			var MM = today.getMinutes();
+			var SS = today.getSeconds();
 
 			if(dd<10) {
     			dd='0'+dd
@@ -600,7 +603,9 @@
 			if(mm<10) {
     			mm='0'+mm
 			} 
-			today = yyyy+'-'+mm+'-'+dd;
+			
+			//2014-11-15T23:22:56.483Z
+			today = yyyy+'-'+mm+'-'+dd+'T'+HH+':'+MM+':'+SS+'Z';
 			return today
     	}
 
@@ -742,6 +747,7 @@
     					}
   					]
 				}
+				alert(JSON.stringify(api_data_createRC));
 				var api_rcCreate = f.fetchUpdateMyRC(api_data_createRC);
 			}
             
@@ -756,8 +762,22 @@
                     else {
                     	showMessage("Repository Container "+statusRC+" failed.<br><br>Title, Body and Tags can not be blank.","neg");
                     }
-                    setupRepo("",rc_length,rc_page,filter,keyword);    
+                    setupRepo("",rc_length,rc_page,filter,keyword); 
+                      
                 })
+                
+                .fail(function(xhr){
+                    f.closeTray();
+                    
+                    // 403 => Request_API fail
+                    if (xhr.status == 403){
+                        showMessage("You don't have permission to use this function.","neg");
+                        return;
+                    }
+                    
+                    // ... otherwise => server fail
+                    //showMessage("Something went wrong.<br><br>Reload the page, and try again in a few minutes.","neg");
+                });
             
         });
         

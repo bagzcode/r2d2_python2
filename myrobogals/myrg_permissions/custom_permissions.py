@@ -84,10 +84,34 @@ class AnyPermissions(BasePermission):
 
 class IsAdminRobogals(BasePermission):
     
+    #def get_object(self):
+     #   obj = get_object_or_404(self.get_queryset())
+      #  logger.error(obj)
+       # self.check_object_permissions(self.request, obj)
+        #return obj
+    
     def has_permission(self, request, view):
-        return True
+        from myrg_groups.serializers import RoleSerializer
+        from myrg_groups.models import Role
+        logger.error("view_permission")
+        user_obj = request.user
+        logger.error(user_obj.id)
+        #select all user_id based on roles e.g superadmin, robogals admin, software team
+        role_query = Role.objects.filter(role_class="1")
+        role_serializer = RoleSerializer
+        role_serializer.Meta.fields = ("user",)
+        role_serializer_query = role_serializer(role_query, many=True)
+        logger.error(role_serializer_query.data)
+        data = json.loads(role_serializer_query.data)
+        role_list = data.get("user")
+        logger.error(role_list)
+        if user_obj.id in role_serializer_query.data.user:
+             return True
+        #Slogger.error(role_serializer_query.data)
+        #return True
         
     def has_object_permission(self, request, view, obj):
+        logger.error("obj_permission")
         return True
 
 class IsTeamMember(BasePermission):
@@ -95,10 +119,10 @@ class IsTeamMember(BasePermission):
     def has_permission(self, request, view):
         from myrg_groups.serializers import RoleSerializer
         from myrg_groups.models import Role
-        logger.error(request.META['REMOTE_ADDR'])
+        #logger.error(request.META['REMOTE_ADDR'])
         user_obj = request.user
         # check role_class based on user_id
-        logger.error(user_obj.role_set.filter(user=user_obj.id))
+        #logger.error(user_obj.role_set.filter(user=user_obj.id))
         #logger.error(Role.objects.filter(user=user_obj.id))
         
         
@@ -107,7 +131,7 @@ class IsTeamMember(BasePermission):
         role_serializer = RoleSerializer
         role_serializer.Meta.fields = ("id","group","role_class",)        
         role_serializer_query = role_serializer(role_query, many=True)
-        logger.error(role_serializer_query.data)
+        #Slogger.error(role_serializer_query.data)
         if role_id is None:
             return False
             
@@ -141,13 +165,26 @@ class IsTeamMember(BasePermission):
 class IsPublicUser(BasePermission):
     
     def has_permission(self, request, view):
-        import random
-        
-        return random.randint(1, 10) > 8
+        return False
         
 
 # example from https://github.com/caxap/rest_condition
 
+class IsOwnerOrReadOnly(BasePermission):
+    """
+    Object-level permission to only allow owners of an object to edit it.
+    Assumes the model instance has an `owner` attribute.
+    """
+
+    def has_object_permission(self, request, view, obj):
+        # Read permissions are allowed to any request,
+        # so we'll always allow GET, HEAD or OPTIONS requests.
+        if request.method in permissions.SAFE_METHODS:
+            return True
+
+        # Instance must have an attribute named `owner`.
+        return obj.owner == request.user
+        
 class IsLucky(BasePermission):
 
     def has_permission(self, request, view):

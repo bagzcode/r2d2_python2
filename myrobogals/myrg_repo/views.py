@@ -25,8 +25,15 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 
-from myrg_permissions.custom_permissions import AnyPermissions, IsTeamMember, IsLucky
+from myrg_permissions.custom_permissions import AnyPermissions, IsAdminRobogals, IsTeamMember, IsPublicUser
 from rest_framework import permissions
+from django.shortcuts import get_object_or_404
+
+# import the logging library
+import logging
+
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
 PAGINATION_MAX_LENGTH = 1000
 
@@ -36,8 +43,21 @@ MAX_REPOS = 1
 ################################################################################
 class ListRepoContainers(RobogalsAPIView):
     permission_classes = [AnyPermissions]
-    any_permission_classes = [IsAdminUser, IsTeamMember]
+    any_permission_classes = [IsAdminRobogals,]
+    
+    
+    def get_object(self):
+        queryset = self.get_queryset()
+        filter = {}
+        for field in self.multiple_lookup_fields:
+            filter[field] = self.kwargs[field]
+
+        obj = get_object_or_404(queryset, **filter)
+        self.check_object_permissions(self.request, obj)
+        return obj
+        
     def post(self, request, format=None):
+        #logger.error(IsAdminRobogals.has_object_permission(self,request,view,obj))
         from myrg_users.serializers import RobogalsUserSerializer
         from myrg_users.models import RobogalsUser
 
@@ -323,7 +343,11 @@ class EditRepoContainers(RobogalsAPIView):
         })
 
 class CreateRepoContainers(RobogalsAPIView):
+    permission_classes = [AnyPermissions]
+    any_permission_classes = [IsAdminRobogals, IsPublicUser]
     def post(self, request, format=None):
+        loggers.error(self)
+        loggers.error(request)
         # request.DATA
         try:
             supplied_repocontainers = list(request.DATA.get("rc"))
