@@ -42,19 +42,19 @@ MAX_REPOS = 1
 # Repo Container
 ################################################################################
 class ListRepoContainers(RobogalsAPIView):
-    permission_classes = [AnyPermissions]
-    any_permission_classes = [IsAdminRobogals,]
+    #permission_classes = [AnyPermissions]
+    #any_permission_classes = [IsAdminRobogals,]
     
     
-    def get_object(self):
-        queryset = self.get_queryset()
-        filter = {}
-        for field in self.multiple_lookup_fields:
-            filter[field] = self.kwargs[field]
+    #def get_object(self):
+        #queryset = self.get_queryset()
+        #filter = {}
+        #for field in self.multiple_lookup_fields:
+        #    filter[field] = self.kwargs[field]
 
-        obj = get_object_or_404(queryset, **filter)
-        self.check_object_permissions(self.request, obj)
-        return obj
+        #obj = get_object_or_404(queryset, **filter)
+        #self.check_object_permissions(self.request, obj)
+        #return obj
         
     def post(self, request, format=None):
         #logger.error(IsAdminRobogals.has_object_permission(self,request,view,obj))
@@ -343,8 +343,8 @@ class EditRepoContainers(RobogalsAPIView):
         })
 
 class CreateRepoContainers(RobogalsAPIView):
-    permission_classes = [AnyPermissions]
-    any_permission_classes = [IsAdminRobogals, IsPublicUser]
+    #permission_classes = [AnyPermissions]
+    #any_permission_classes = [IsAdminRobogals, IsPublicUser]
     def post(self, request, format=None):
         loggers.error(self)
         loggers.error(request)

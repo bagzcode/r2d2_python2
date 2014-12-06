@@ -17,6 +17,7 @@ from myrg_users.views import ListUsers, DeleteUsers, EditUsers, CreateUsers, Res
 from myrg_groups.views import ListGroups, DeleteGroups, EditGroups, CreateGroups, ListRoles, EditRoles, CreateRoles, ListRoleClasses, DeleteRoleClasses, EditRoleClasses, CreateRoleClasses
 from myrg_repo.views import ListRepoFiles, DeleteRepoFiles, ListRepoContainers, DeleteRepoContainers, EditRepoContainers, CreateRepoContainers
 from myrg_messages.views import SendMessage
+from myrg_permissions.views import ListPermission, DeletePermissionLists, EditPermissionLists, CreatePermissionLists
 
 # Auto generate/collate Django admin panels
 admin.autodiscover()
@@ -69,6 +70,11 @@ api_urlpatterns = patterns('',
     url(r'^api/1.0/repocontainers/delete$', DeleteRepoContainers.as_view()),
     url(r'^api/1.0/repocontainers/edit$', EditRepoContainers.as_view()),
     url(r'^api/1.0/repocontainers/create$', CreateRepoContainers.as_view()),
+    
+    url(r'^api/1.0/permissions/list$', ListPermission.as_view()),
+    url(r'^api/1.0/permissions/delete$', DeletePermissionLists.as_view()),
+    url(r'^api/1.0/permissions/edit$', EditPermissionLists.as_view()),
+    url(r'^api/1.0/permissions/create$', CreatePermissionLists.as_view()),
 
     url(r'^api/1.0/messages/send$', SendMessage.as_view()),
 )
