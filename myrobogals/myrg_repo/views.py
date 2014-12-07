@@ -25,10 +25,11 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse
 
-from myrg_permissions.custom_permissions import AnyPermissions, IsAdminRobogals, IsTeamMember, IsPublicUser
+from myrg_permissions.custom_permissions import AnyPermissions, IsAdminRobogals, IsTeamMember, IsPublicUser, PermissionManager
 from rest_framework import permissions
 from django.shortcuts import get_object_or_404
 
+import json
 # import the logging library
 import logging
 
@@ -44,20 +45,25 @@ MAX_REPOS = 1
 class ListRepoContainers(RobogalsAPIView):
     #permission_classes = [AnyPermissions]
     #any_permission_classes = [IsAdminRobogals,]
-    
-    
-    #def get_object(self):
-        #queryset = self.get_queryset()
-        #filter = {}
-        #for field in self.multiple_lookup_fields:
-        #    filter[field] = self.kwargs[field]
-
-        #obj = get_object_or_404(queryset, **filter)
-        #self.check_object_permissions(self.request, obj)
-        #return obj
         
     def post(self, request, format=None):
-        #logger.error(IsAdminRobogals.has_object_permission(self,request,view,obj))
+        ################################################################
+        # Permission restricted viewing to be implemented here
+        #
+        # if not permission_allows_viewing_of_this_id:
+        #   failed_repocontainer_updates.update({pk: "PERMISSION_DENIED"})
+        #   skip_roleclass = True
+        #   break
+        ################################################################
+        PERMISSION_TO_VIEW = [int(i) for i in PermissionManager.get_classes_list("USER_SELF_VIEW").split(',')]
+        logger.error(PERMISSION_TO_VIEW)
+        USER_ROLECLASS = PermissionManager.get_userclass_by_user(request.user.id)
+        if USER_ROLECLASS in PERMISSION_TO_VIEW:
+            logger.error("user permission accepted")
+        else:
+            logger.error("permission denied")
+            return Response({"PERMISSION_DENIED"}, status=status.HTTP_400_BAD_REQUEST)
+        
         from myrg_users.serializers import RobogalsUserSerializer
         from myrg_users.models import RobogalsUser
 
